@@ -35,6 +35,7 @@ permissions:
 jobs:
   sync-to-career-cafe:
     name: "Push main → Career-Cafe/agent-skills-hub-sync-engine"
+    if: startsWith(github.repository, 'MishraShardendu22/')
     runs-on: ubuntu-latest
     steps:
       - name: "Checkout full history"
