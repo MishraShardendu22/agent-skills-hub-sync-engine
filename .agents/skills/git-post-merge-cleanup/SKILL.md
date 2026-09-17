@@ -111,8 +111,62 @@ git status
 
 ---
 
-## 4. Automated Remote Branch Cleanup on PR Merge
+## 4. Automated Remote Branch Cleanup on PR Close (GitHub Actions)
 
-Remote feature branch deletion can be automated via GitHub Actions:
-- **Trigger**: Triggers automatically on `pull_request: [closed]` when `merged == true`.
-- **Action**: Deletes the remote feature branch on GitHub, preventing stale remote reference buildup.
+> [!IMPORTANT]
+> **MANDATORY IN EVERY REPOSITORY**: Every project repository MUST have `.github/workflows/pr-branch-cleanup.yml` deployed. This workflow is the automated counterpart to the manual local cleanup runbook above. Without it, merged feature branches accumulate on GitHub and pollute the remote branch list.
+
+Remote feature branch deletion is automated via a GitHub Actions workflow that triggers on every PR close event (both merged and closed-without-merge). The canonical workflow is:
+
+```yaml
+# .github/workflows/pr-branch-cleanup.yml
+name: "PR Closed — Remote Branch Cleanup"
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup-closed-branch:
+    name: "Delete Closed Remote Branch"
+    if: >
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.head.ref != 'main' &&
+      github.event.pull_request.head.ref != 'master'
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Delete Remote Feature Branch"
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const headRef = context.payload.pull_request.head.ref;
+            try {
+              await github.rest.git.deleteRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: `heads/${headRef}`
+              });
+              core.info(`✅ Successfully deleted remote branch: ${headRef}`);
+            } catch (error) {
+              if (error.status === 422 || error.status === 404) {
+                core.info(`ℹ️  Remote branch '${headRef}' was already deleted — skipping.`);
+              } else {
+                core.setFailed(`❌ Failed to delete remote branch '${headRef}': ${error.message}`);
+              }
+            }
+```
+
+**Safety guarantees baked into the workflow:**
+- Only runs on branches from the same repo (not forks).
+- Never deletes `main` or `master`.
+- Silently skips if the branch was already deleted.
+- Does NOT require the PR to be merged — also cleans up abandoned/closed PRs.
+
+**Relationship to local cleanup (Sections 2–3 above):**
+- This workflow handles the **remote** branch only.
+- The human user still triggers the local cleanup runbook (Sections 1–3) after merging.
+- Together they ensure zero stale branches both locally and on GitHub.

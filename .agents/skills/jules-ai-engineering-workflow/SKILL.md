@@ -110,3 +110,81 @@ jules remote list --session
 # 5. Pull and apply session patch to local repository
 jules remote pull --session <session-id> --apply
 ```
+
+---
+
+## 5. GitHub Actions Integration — How Jules Is Triggered in Practice
+
+> [!IMPORTANT]
+> **The GitHub Actions workflow is the primary runtime trigger for Jules.** The CLI commands above (Section 4) are for local/manual invocation. In standard repository workflow, Jules is triggered automatically on every Pull Request via a GitHub Actions workflow that assigns `@google-labs-jules[bot]` as a reviewer.
+
+### How the Trigger Works
+
+1. A developer or AI agent opens a PR targeting `main`.
+2. The `jules-pr-review.yml` GitHub Actions workflow fires automatically.
+3. The workflow calls the GitHub API to assign `@google-labs-jules[bot]` as a reviewer.
+4. Jules detects the reviewer assignment, clones the PR branch, and runs its 38-dimension review pipeline.
+5. Jules posts a structured review comment on the PR thread with scores, findings, and suggested fixes.
+6. If P0/P1 issues are found, Jules opens a remediation session and iterates until the PR converges.
+
+### Required Workflow: `.github/workflows/jules-pr-review.yml`
+
+Every repository MUST have this workflow deployed:
+
+```yaml
+# .github/workflows/jules-pr-review.yml
+name: "PR Opened — Assign Jules AI Reviewer"
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
+
+permissions:
+  pull-requests: write
+
+jobs:
+  assign-jules-reviewer:
+    name: "Assign Jules Bot as PR Reviewer"
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Request Jules Review"
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const eventAction = context.payload.action;
+            if (eventAction === 'synchronize') {
+              core.info('New commits pushed — Jules will auto re-review. Skipping re-assignment.');
+              return;
+            }
+            try {
+              await github.rest.pulls.requestReviewers({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber,
+                reviewers: ['google-labs-jules[bot]']
+              });
+              core.info(`✅ Jules assigned as reviewer for PR #${prNumber}.`);
+            } catch (error) {
+              core.warning(`⚠️  Could not assign Jules reviewer: ${error.message}`);
+              core.warning('Ensure the Jules GitHub App is installed: https://jules.google.com');
+            }
+```
+
+### Prerequisite: Jules GitHub App Installation
+
+> [!IMPORTANT]
+> The Jules GitHub App **must be installed** in your GitHub organization or repository before this workflow can trigger Jules reviews.
+> - Install at: **[jules.google.com](https://jules.google.com)** → "Install Jules on GitHub"
+> - Grant access to the target repository (e.g., `Career-Cafe/dsa-confidence-engine`)
+> - Once installed, `@google-labs-jules[bot]` becomes a valid reviewer in the org
+
+### Draft PR Behavior
+- **Draft PRs**: Jules is NOT assigned — the workflow skips `draft == true` PRs.
+- **Ready for Review**: When a draft is converted to ready, Jules is assigned automatically (via the `reopened` trigger).
+- **New commits (synchronize)**: Jules automatically re-reviews without a new assignment.
+

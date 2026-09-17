@@ -84,3 +84,42 @@ Issues are created through standardized YAML issue forms in `.github/ISSUE_TEMPL
 - `bug_report.yml`: Structured bug reproduction steps, environment, logs.
 - `feature_request.yml`: Problem statement, target subsystem, architecture proposal.
 - `task.yml`: Engineering task, acceptance criteria, test commands.
+
+---
+
+## 5. Required GitHub Actions Workflows in Every Repository
+
+> [!IMPORTANT]
+> **Every project repository MUST have the following three GitHub Actions workflow files** deployed under `.github/workflows/`. These are not optional — they are the automated operational backbone of the repository. When setting up a new repository or onboarding an existing one, verify all three exist before any other work.
+
+### Canonical Workflow Checklist
+
+| File | Purpose | Trigger |
+| :--- | :--- | :--- |
+| `pr-branch-cleanup.yml` | Auto-deletes remote feature branch when a PR is closed (merged or abandoned). Prevents stale branch buildup. | `pull_request: [closed]` |
+| `jules-pr-review.yml` | Assigns `@google-labs-jules[bot]` as a reviewer on every non-draft PR. This triggers the Jules 38-dimension autonomous review loop. | `pull_request: [opened, synchronize, reopened]` |
+| `ci.yml` | Runs the full test and build pipeline (gofmt, `go test -race`, `go build`, `go mod tidy`) as an enforced quality gate before merging. | `push` (any branch), `pull_request` (→ `main`) |
+
+### Verification Command
+
+To confirm all three workflows exist in a repository:
+
+```bash
+ls .github/workflows/
+# Expected output includes:
+#   ci.yml
+#   jules-pr-review.yml
+#   pr-branch-cleanup.yml
+```
+
+### Canonical References
+
+- **`pr-branch-cleanup.yml`**: See `.agents/skills/git-post-merge-cleanup/SKILL.md` Section 4 for full YAML and safety details.
+- **`jules-pr-review.yml`**: See `.agents/skills/jules-ai-engineering-workflow/SKILL.md` Section 5 for full YAML, Jules app installation, and draft PR behavior.
+- **`ci.yml`**: See `.agents/skills/ci-cd-workflow/SKILL.md` Section 4 for DSA-specific CI job structure and local mirrors.
+
+### Agent Responsibility
+
+> [!IMPORTANT]
+> When an AI agent sets up, scaffolds, or clones a repository, it MUST verify that all three workflows are present. If any are missing, the agent MUST create them immediately before committing any other code — these workflows are infrastructure, not a nice-to-have.
+
