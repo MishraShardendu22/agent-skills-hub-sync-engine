@@ -1,0 +1,59 @@
+# ==============================================================================
+# GitHub Actions — Auto-Sync main branch to Career-Cafe fork on every push
+# ==============================================================================
+#
+# PURPOSE:
+#   Every time a commit lands on `main` in MishraShardendu22/agent-skills,
+#   this workflow automatically force-pushes the exact same main branch state
+#   to Career-Cafe/agent-skills-hub-sync-engine.
+#
+# HOW IT WORKS:
+#   Uses a Personal Access Token (PAT) with repo scope stored as the
+#   CC_SYNC_PAT repository secret. The PAT must belong to an account that
+#   has write access to Career-Cafe/agent-skills-hub-sync-engine.
+#
+# REQUIRED SECRET:
+#   CC_SYNC_PAT — a GitHub PAT with `repo` scope that has write access to
+#   the Career-Cafe org. Add it at:
+#   https://github.com/MishraShardendu22/agent-skills/settings/secrets/actions
+#
+# SAFETY:
+#   - Only runs on the `main` branch, never on feature branches.
+#   - Uses --force (safe here because Career-Cafe is a pure mirror of this repo).
+#   - If CC_SYNC_PAT is not set, the workflow fails loudly to alert the owner.
+# ==============================================================================
+name: "main merged — Sync to Career-Cafe fork"
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  sync-to-career-cafe:
+    name: "Push main → Career-Cafe/agent-skills-hub-sync-engine"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout full history"
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: "Validate CC_SYNC_PAT secret is configured"
+        run: |
+          if [ -z "${{ secrets.CC_SYNC_PAT }}" ]; then
+            echo "❌ CC_SYNC_PAT secret is not set."
+            echo "Add it at: https://github.com/MishraShardendu22/agent-skills/settings/secrets/actions"
+            exit 1
+          fi
+          echo "✅ CC_SYNC_PAT is configured."
+
+      - name: "Push main to Career-Cafe/agent-skills-hub-sync-engine"
+        run: |
+          git remote add career-cafe \
+            "https://x-access-token:${{ secrets.CC_SYNC_PAT }}@github.com/Career-Cafe/agent-skills-hub-sync-engine.git"
+          git push career-cafe main:main --force
+          echo "✅ Career-Cafe/agent-skills-hub-sync-engine synced to $(git rev-parse --short HEAD)"
