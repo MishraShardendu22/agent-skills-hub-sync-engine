@@ -22,8 +22,6 @@ Every deployable unit has a stable, product-prefixed name. Generic names such as
 | Python AI and RAG service | `github-backup-observatory` | `src/services/github-backup-observatory/` |
 | Go scheduled backup engine | `github-backup-worker` | `src/services/github-backup-worker/` |
 | Go MCP integration server | `github-backup-mcp` | `src/backend/github-backup-mcp/` |
-| Design system website (Next.js static export) | `github-backup-design` | `src/apps/github-backup-design/` |
-| Documentation website (Docusaurus) | `github-backup-docs` | `src/apps/github-backup-docs/` |
 
 The repository uses `src/apps/` for user-facing applications, `src/services/` for runtime workers and AI services, and `src/backend/` for the REST API and MCP integration server.
 

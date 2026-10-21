@@ -117,4 +117,3 @@ If any CLI tool reports authentication expiration or failure, alert the human de
 2. **Vercel CLI**: `vercel login`
 3. **Neon CLI**: `neonctl auth`
 4. **Docker Hub**: `docker login`
-5. **Project CLIs with stored logins** (OS keychain or a private credentials file): when one reports an expired, revoked or unreadable login, give the human the project's documented login command (for example a `make login-<service>` target). Never work around it by pasting tokens into `.env` files, and never run interactive browser logins on the human's behalf.

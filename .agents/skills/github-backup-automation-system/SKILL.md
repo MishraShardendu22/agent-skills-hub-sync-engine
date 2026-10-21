@@ -18,7 +18,6 @@ This directory contains the following dedicated skills:
 
 | Skill File | Scope | Domain | Description |
 | :--- | :--- | :--- | :--- |
-| [`github-backup-architecture.md`](github-backup-architecture.md) | `codebase-github-backup-automation-system` | System Architecture | End-to-end system topology, service responsibilities (`frontend`, `agentic-observatory`, `backend`, `backup-worker`, MCP server), PostgreSQL database schema, and the CI/CD workflows, images, compose smoke test and env files. |
+| [`github-backup-architecture.md`](github-backup-architecture.md) | `codebase-github-backup-automation-system` | System Architecture | End-to-end system topology, service responsibilities (`frontend`, `agentic-observatory`, `backend`, `backup-worker`), and PostgreSQL database schema. |
 | [`agentic-observatory-workflow.md`](agentic-observatory-workflow.md) | `codebase-github-backup-automation-system` | AI Observatory | Adding tools to `src/services/github-backup-observatory/data/tools/`, Tool-Calling RAG workflows, HITL email alerts, and OpenRouter multi-key pool failover. |
 | [`service-naming-standard.md`](service-naming-standard.md) | `codebase-github-backup-automation-system` | Naming & Layout | Canonical product names, source directories, commands, containers, and migration rules. |
-| [`worker-setup-and-logins.md`](worker-setup-and-logins.md) | `codebase-github-backup-automation-system` | Worker Setup & Logins | `make setup` scheduling per OS, the GitHub App and device-flow logins, the keychain credential store, and their invariants and tests. |

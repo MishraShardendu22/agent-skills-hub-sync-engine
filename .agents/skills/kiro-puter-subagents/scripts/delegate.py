@@ -39,20 +39,11 @@ def run_kiro(prompt: str, model: str = "claude-haiku-4.5") -> int:
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     stdout, stderr = proc.communicate()
 
-    # Check for pool exhaustion or re-login requirement
+    # Check for pool exhaustion
     combined = (stdout + "\n" + stderr).lower()
-    if (
-        "all pooled accounts are currently throttled" in combined or
-        "all active accounts are currently in cooldown" in combined or
-        "no accounts exist" in combined or
-        "no accounts enrolled" in combined
-    ):
+    if "all pooled accounts are currently throttled" in combined or "no accounts exist" in combined:
         sys.stderr.write("\n[ALERT] Kiro CLI multi-account pool limit is exhausted! All accounts are in cooldown or out of credits.\n")
         return 429
-
-    if "all pooled accounts require re-login" in combined:
-        sys.stderr.write("\n[ALERT] Kiro CLI pool accounts require re-login! Run 'kiro-pool add' or 'kiro-pool status'.\n")
-        return 401
 
     cleaned = clean_kiro_output(stdout)
     if cleaned:

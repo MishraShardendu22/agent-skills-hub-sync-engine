@@ -22,27 +22,18 @@ This skill explains how to maintain, configure, and execute the intelligent pre-
 
 ---
 
-## 2. Pre-Commit and Pre-Push Architecture
+## 2. Pre-Commit Architecture
 
-The hooks live in `.githooks/` and are tracked directly in version control. Commits must stay fast, so the work is split:
-
-- **`pre-commit`**: fast checks only (secret scan, formatting, lint, static analysis, unit tests of the changed areas).
-- **`pre-push`**: re-runs the pre-commit checks for the commits being pushed, then the slow builds (binaries, frontend production build, container images when container files change).
+The pre-commit workflow typically lives in `.githooks/pre-commit` and is tracked directly in version control.
 
 ```text
-Staged Changes Detected (git diff --cached)          [pre-commit]
+Staged Changes Detected (git diff --cached)
   │
-  ├── Only Go files changed ───────► Formatting, vet, tests of the changed packages
-  ├── Only Python files changed ───► Pyright/Ruff, test suites
-  ├── Only Frontend files changed ─► Biome/Linter, tsc --noEmit
+  ├── Only Go files changed ───────► Run Go formatting, vet, tests, build
+  ├── Only Python files changed ───► Run Pyright/Ruff, test suites
+  ├── Only Frontend files changed ─► Run Biome/Linter, frontend build
   ├── Only Documentation changed ──► Fast-path bypass (<0.2s)
-  └── Global / Config / Manual ────► Every fast check
-
-Pushed Commits Detected (stdin refs from git push)   [pre-push]
-  │
-  ├── Re-run the pre-commit checks for <remote sha>..<local sha>
-  ├── Code changed ────────────────► Compile binaries / frontend production build
-  └── Container files changed ─────► Build the affected images (cache only)
+  └── Global / Config / Manual ────► Full monorepo validation gate
 ```
 
 ---
@@ -50,11 +41,10 @@ Pushed Commits Detected (stdin refs from git push)   [pre-push]
 ## 3. Key Features
 
 1. **Selective Staged-File Execution**: Avoids unnecessary work by only running checks relevant to the files staged for the commit.
-2. **Fast-Path for Documentation**: Commits containing only markdown (`*.md`), text (`*.txt`), or asset files skip every check.
-3. **Builds at Push Time**: Compilation and image builds run once per push instead of on every commit; the pre-push hook reads the pushed ref range from stdin and falls back to a full run when it cannot determine it.
-4. **Subshell Directory Isolation**: Every check runs in a subshell `(cd "${REPO_ROOT}" && ...)` to prevent current working directory drift.
-5. **Fail-Fast with Remediation**: Aborts immediately on failure and outputs exact commands needed to fix the problem.
-6. **Zero External Runtime Dependencies**: Implemented in portable bash, requiring no heavy wrapper packages at the repository root. Keep it compatible with the bash 3.2 macOS ships: no associative arrays, `mapfile`/`readarray` or `${var,,}`, and no empty arrays under `set -u`.
+2. **Fast-Path for Documentation**: Commits containing only markdown (`*.md`), text (`*.txt`), or asset files skip expensive build and test pipelines.
+3. **Subshell Directory Isolation**: Every check runs in a subshell `(cd "${REPO_ROOT}" && ...)` to prevent current working directory drift.
+4. **Fail-Fast with Remediation**: Aborts immediately on failure and outputs exact commands needed to fix the problem.
+5. **Zero External Runtime Dependencies**: Implemented in portable POSIX bash, requiring no heavy wrapper packages at the repository root.
 
 ---
 
@@ -66,10 +56,9 @@ make hooks-install
 # Or: ./scripts/install-hooks.sh
 ```
 
-### Manually Running the Gates
+### Manually Running Pre-Commit Gate
 ```bash
-make pre-commit   # every fast check
-make pre-push     # every check plus every build, without pushing
+make pre-commit
 ```
 
 ### Bypass Flags (Emergency Only)
@@ -77,15 +66,9 @@ make pre-push     # every check plus every build, without pushing
 # Skip tests for quick drafts
 SKIP_TESTS=1 git commit -s -S -m "chore: draft"
 
-# Skip the push-time builds (or only the container image builds)
-SKIP_BUILDS=1 git push
-SKIP_DOCKER=1 git push
+# Skip builds for lightweight edits
+SKIP_BUILDS=1 git commit -s -S -m "fix: comment"
 
 # Force full validation across all subsystems
 PRECOMMIT_ALL=1 git commit -s -S -m "feat: core change"
-PREPUSH_ALL=1 git push
-
-# Skip a hook entirely
-SKIP_HOOKS=1 git commit -s -S -m "wip: draft"   # or PRECOMMIT_BYPASS=1
-PREPUSH_BYPASS=1 git push
 ```

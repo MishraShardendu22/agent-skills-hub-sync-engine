@@ -60,45 +60,45 @@ The AI service operates as a **Tool-Calling RAG Agent**:
 ## 4. Implementing Human-In-The-Loop (HITL) Actions
 
 For sensitive or destructive actions (e.g., dispatching external emails, modifying records, triggering external deployments):
-1. Keep pending confirmations in a shared store (a database table), not in process memory: the approval request can reach a different instance or worker than the stream that waits for it.
-2. In the agent loop, before running the tool, store a pending row (id, owner, tool, arguments) and emit an event that also carries the model's tool call id, so the UI can pair it with the tool's start and end events:
+1. In the agent reasoning execution loop, intercept the tool call prior to execution:
    ```python
-   if tool_name in CONFIRMATION_REQUIRED_TOOLS:
+   if tool_name in SENSITIVE_ACTION_TOOLS:
        confirm_id = str(uuid.uuid4())
-       await confirmations.create(confirm_id, username=username, tool_name=tool_name, args=tool_args)
+       confirm_event = asyncio.Event()
+       active_confirmations[confirm_id] = confirm_event
+
        yield json.dumps({
            "type": "confirm_required",
            "confirm_id": confirm_id,
            "name": tool_name,
            "args": tool_args,
-           "tool_call_id": tool_call_id,
        })
-       # Poll this confirmation's own row; on timeout or cancellation mark it expired.
-       decision = await confirmations.wait_for_decision(confirm_id, timeout=120.0, poll_interval=0.5)
+       # Await user confirmation or timeout
+       await asyncio.wait_for(confirm_event.wait(), timeout=120.0)
    ```
-3. Let only the owner decide (a decision from another user looks like an unknown id), and refuse a second decision.
-4. Treat a timeout as a rejection. Feed the approval or rejection back to the LLM context to continue safely.
-5. Code paths that cannot ask (non-streaming chat, direct tool execution endpoints) must refuse these tools instead of running them.
+2. Feed the user approval or rejection payload back to the LLM context to continue execution safely.
 
 ---
 
 ## 5. Multi-Key API Failover
 
 When interacting with external LLM APIs (e.g. OpenRouter, OpenAI, Anthropic):
-- Resolve the keys for each request (the user's own key, or the server pool) and pass them explicitly; never keep a process-wide "current key" that concurrent requests change.
-- Rotate to the next key only on HTTP `401`, `402` or `429`. Other errors, such as `400` for a bad request, are the caller's problem and must be returned, not retried on every key.
-- A user's own key is never replaced by another user's key or, unless configured, by the server pool.
-- Give every call a timeout, disable hidden SDK retries, and put a deadline on the whole agent turn.
+- Maintain an in-memory pool of configured API keys.
+- On HTTP `401`, `402`, or `429` (rate limit/quota exhaustion), rotate to the next backup key with exponential backoff and jitter.
+- Track latency and failure counts per key to optimize routing.
 
 ---
 
 ## 6. Comprehensive Agent Test Suites
 
-Use pytest with the network blocked, so a test that would call a real LLM, email server or backend fails instead:
+Execute verification test suites:
 ```bash
-# Unit tests (HTTP mocked with respx, LLMs replaced by fakes)
-uv run pytest
+# 1. Run all unit and integration tests across the system
+make test
 
-# Integration tests against a disposable local database
-TEST_DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/postgres uv run pytest -m integration
+# 2. Run dedicated AI Agent & Tool-Calling RAG test suite
+make test-agents
+
+# 3. Direct execution of agent evaluation tests
+uv run python -m unittest discover -s tests -p "test_agent*.py"
 ```

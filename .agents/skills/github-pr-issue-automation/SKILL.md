@@ -97,8 +97,8 @@ Issues are created through standardized YAML issue forms in `.github/ISSUE_TEMPL
 | File | Purpose | Trigger |
 | :--- | :--- | :--- |
 | `pr-branch-cleanup.yml` | Auto-deletes remote feature branch when a PR is closed (merged or abandoned). Prevents stale branch buildup. | `pull_request: [closed]` |
-| `jules-pr-review.yml` | Assigns `@google-labs-jules[bot]` as a reviewer on every non-draft PR into any base branch (stacked PRs included). It never reviews or labels by itself. | `pull_request: [opened, reopened, ready_for_review]` |
-| `ci.yml` | Runs the path-filtered test and build pipeline (gofmt, `go mod tidy`, `go test -race`, `go build`, image smoke tests) plus one aggregate status job as the enforced quality gate. | `push` (any branch), `pull_request` (→ `main`, forks only) |
+| `jules-pr-review.yml` | Assigns `@google-labs-jules[bot]` as a reviewer on every non-draft PR. This triggers the Jules 38-dimension autonomous review loop. | `pull_request: [opened, synchronize, reopened]` |
+| `ci.yml` | Runs the full test and build pipeline (gofmt, `go test -race`, `go build`, `go mod tidy`) as an enforced quality gate before merging. | `push` (any branch), `pull_request` (→ `main`) |
 
 ### Verification Command
 

@@ -59,7 +59,7 @@ This skill defines the architectural blueprint, service boundaries, inter-servic
 ## 3. Service Boundaries & Responsibilities
 
 ### Next.js Frontend (`frontend/` or `web/`)
-- **Framework**: Next.js App Router with Turbopack, Tailwind CSS, Biome linter, and TypeScript; visual language from a separately released design system package (tokens plus components) rather than per-app styles.
+- **Framework**: Next.js App Router with Turbopack, Tailwind CSS, Biome linter, and TypeScript.
 - **Responsibilities**:
   - Unified user interface, operational dashboards, and analytics charts.
   - Interactive AI chat streaming via Server-Sent Events (SSE).

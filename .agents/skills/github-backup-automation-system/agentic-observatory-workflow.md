@@ -42,46 +42,41 @@ The Observatory agent calls `hybrid_search_knowledge_base` during reasoning loop
 
 ## 3. Human-In-The-Loop (HITL) Confirmations
 
-Sensitive actions (tools in `CONFIRMATION_REQUIRED_TOOLS` in `agent/openrouter.py`, today `send_report_email`) require user confirmation:
-1. `stream_agent()` stores a pending row with `data.confirmations.create_confirmation()` (table `ai_tool_confirmations`: `confirm_id`, `session_id`, `username`, `tool_name`, `args`, `status`, `created_at`, `decided_at`) and yields:
-   ```json
-   {"type": "confirm_required", "confirm_id": "<uuid>", "name": "send_report_email", "args": {}, "tool_call_id": "<id>"}
-   ```
-2. The dashboard answers with `POST /chat/confirm` and `{"confirm_id": "<uuid>", "approve": true}` (`approved` is an accepted alias; keep `approve`, the deployed dashboard sends it). `data.confirmations.decide()` only lets the user who started the turn decide.
-3. The stream waits with `wait_for_decision(confirm_id, timeout=HITL_CONFIRMATION_TIMEOUT_SECONDS, poll_interval=HITL_POLL_INTERVAL_SECONDS)`. A timeout or a disconnect marks the row `expired`, which counts as rejected; the tool then ends with `tool_end` and `success: false`.
-4. `POST /chat` and `POST /api/tools/execute` refuse these tools. Email recipients must be in the `SMTP_TO` allowlist.
+Sensitive actions (e.g. `send_report_email`) require asynchronous user confirmation:
+1. Intercept in `src/services/github-backup-observatory/agent/openrouter.py`:
+   ```python
+   if tool_name == "send_report_email":
+       confirm_id = str(uuid.uuid4())
+       confirm_event = asyncio.Event()
+       active_confirmations[confirm_id] = confirm_event
 
-Every event of one tool call carries the same `tool_call_id` (`ensure_tool_call_ids()` fills in a UUID when the model sent none). Keep the SSE shapes additive; the dashboard depends on them (`docs/STREAMING_ARCHITECTURE.md`).
+       yield json.dumps({
+           "type": "confirm_required",
+           "confirm_id": confirm_id,
+           "name": tool_name,
+           "args": tool_args,
+       })
+       await asyncio.wait_for(confirm_event.wait(), timeout=120.0)
+   ```
+2. Handle the user confirmation webhook via `/chat/confirm`.
 
 ---
 
 ## 4. Multi-Key OpenRouter Failover
 
 Centralized in `src/services/github-backup-observatory/utils/openrouter_keys.py`:
-- `OpenRouterCredentials`: the keys one request may use, resolved per request by `services.openrouter_accounts.resolve_credentials(username)` (the user's own key, else `server_credentials()`).
-- `call_with_failover(credentials, operation, purpose=...)`: runs `operation(key)`; moves to the next server key only on `401`, `402` or `429`. A `400` raises `OpenRouterRequestRejected`; a user key is never rotated (`UserKeyRejected` 403, `UserKeyOutOfCredits` 402, `UserKeyRateLimited` 429).
-- `use_credentials(credentials)`: sets the credentials for code that cannot take them as an argument (LangChain tools); pass them explicitly everywhere else.
-- HTTP goes through `utils/openrouter_http.py` (shared clients, attribution headers, `api_url()` on `OPENROUTER_API_BASE`).
+- `get_openrouter_api_keys()`: Reads comma-separated keys from environment.
+- `get_active_openrouter_key()`: Returns active client key.
+- `rotate_openrouter_key(failed_key, reason)`: Rotates to the next pool key on `401`, `402`, or `429` status codes.
 
 ---
 
-## 5. Database Changes
-
-The observatory runs no DDL. New tables and indexes go into a new idempotent migration in `src/internal/dbmigrate/migrations/` (`NNNNNN_name.up.sql` plus a `.down.sql` that drops only what it created); the Go API applies it at startup. Add the table to `data/db.py` metadata only if the ORM needs it.
-
----
-
-## 6. Verification & Test Suite
+## 5. Verification & Test Suite
 
 ```bash
-cd src/services/github-backup-observatory
+# Run AI Agent & Tool-Calling RAG test suite
+make test-agents
 
-# Unit tests (network blocked; OpenRouter, the Go backend and SMTP are mocked)
-uv run pytest
-
-# Integration tests: disposable database built from the migration files
-TEST_DATABASE_URL=postgres://postgres:postgres@127.0.0.1:55432/postgres uv run pytest
-
-# Type check
-uv run --with pyright pyright
+# Run individual test modules
+cd src/services/github-backup-observatory && uv run python -m unittest test_observability.py test_openrouter_keys.py test_agent_suite.py
 ```

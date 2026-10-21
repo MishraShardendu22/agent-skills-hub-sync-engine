@@ -120,7 +120,7 @@ jules remote pull --session <session-id> --apply
 
 ### How the Trigger Works
 
-1. A developer or AI agent opens a PR (targeting `main` or, for stacked PRs, another branch).
+1. A developer or AI agent opens a PR targeting `main`.
 2. The `jules-pr-review.yml` GitHub Actions workflow fires automatically.
 3. The workflow calls the GitHub API to assign `@google-labs-jules[bot]` as a reviewer.
 4. Jules detects the reviewer assignment, clones the PR branch, and runs its 38-dimension review pipeline.
@@ -137,34 +137,40 @@ name: "PR Opened — Assign Jules AI Reviewer"
 
 on:
   pull_request:
-    types: [opened, reopened, ready_for_review]
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
 
 permissions:
-  contents: read
+  pull-requests: write
 
 jobs:
   assign-jules-reviewer:
     name: "Assign Jules Bot as PR Reviewer"
     if: github.event.pull_request.draft == false
-    runs-on: ubuntu-24.04
-    permissions:
-      pull-requests: write
+    runs-on: ubuntu-latest
     steps:
       - name: "Request Jules Review"
-        uses: actions/github-script@<full-commit-sha> # vX.Y.Z (current major, pinned by SHA)
+        uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const prNumber = context.payload.pull_request.number;
+            const eventAction = context.payload.action;
+            if (eventAction === 'synchronize') {
+              core.info('New commits pushed — Jules will auto re-review. Skipping re-assignment.');
+              return;
+            }
             try {
               await github.rest.pulls.requestReviewers({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 pull_number: prNumber,
-                reviewers: ['google-labs-jules[bot]'],
+                reviewers: ['google-labs-jules[bot]']
               });
-              core.info(`[SUCCESS] Jules assigned as reviewer for PR #${prNumber}.`);
+              core.info(`✅ Jules assigned as reviewer for PR #${prNumber}.`);
             } catch (error) {
-              core.warning(`[WARN] Could not assign the Jules reviewer: ${error.message}`);
+              core.warning(`⚠️  Could not assign Jules reviewer: ${error.message}`);
               core.warning('Ensure the Jules GitHub App is installed: https://jules.google.com');
             }
 ```
@@ -179,10 +185,6 @@ jobs:
 
 ### Draft PR Behavior
 - **Draft PRs**: Jules is NOT assigned — the workflow skips `draft == true` PRs.
-- **Ready for Review**: When a draft is converted to ready, Jules is assigned automatically (via the `ready_for_review` trigger).
-- **New commits (synchronize)**: Jules automatically re-reviews without a new assignment, so the workflow does not listen for `synchronize`.
-
-### Honesty Rules
-- The workflow only requests the review; it never posts review text, scores or approval labels itself.
-- `scripts/jules-review-loop.sh` (and any equivalent local tooling) MUST exit non-zero with "No review was performed" when the Jules CLI is unavailable, instead of printing a simulated review.
+- **Ready for Review**: When a draft is converted to ready, Jules is assigned automatically (via the `reopened` trigger).
+- **New commits (synchronize)**: Jules automatically re-reviews without a new assignment.
 

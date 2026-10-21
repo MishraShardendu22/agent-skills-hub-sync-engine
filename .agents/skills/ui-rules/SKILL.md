@@ -1,113 +1,82 @@
 ---
 name: ui-rules
 scope: generic
-description: Frontend visual invariants for the dashboard and every app built on the Observatory design system: tokens over hardcoded values, library components over hand-styled markup, the status vocabulary, no hover levitation, no AI aesthetic bloat, device-driven theme with no toggle.
+description: Strict frontend engineering and visual design invariants: bans hover levitation/translate-y, eliminates AI aesthetic bloat, and enforces grounded design tokens.
 ---
 
 # UI Rules & Visual Engineering Standards
 
-These rules apply to the dashboard app under `src/apps/` and to any app that installs the
-Observatory design system ([`MishraShardendu22/observatory-ui`](https://github.com/MishraShardendu22/observatory-ui)):
-`@mishrashardendu22/observatory-tokens` (CSS custom properties, a Tailwind v4 theme, a typed
-object) and `@mishrashardendu22/observatory-ui` (React components and `styles.css`). The brand
-book that explains the tokens lives with the design system; this skill is the engineering contract.
+This skill defines the mandatory visual engineering standards, interaction invariants, and anti-patterns across all modern frontend applications, websites, and user interfaces.
 
 ---
 
-## 1. Rule: Tokens, never values
-
-- Colour, radius, spacing, shadow and font stacks come from the tokens: `var(--accent)`,
-  `var(--bg-100)`, `var(--radius-md)`, `var(--space-4)`. A hex, `rgb()` or px radius in a
-  component or stylesheet is a defect unless it is in `tokens.json` itself.
-- Grounds step up by lightness: `--bg-000` page, `--bg-100` cards and sidebar, `--bg-200` fills
-  inside a card, `--bg-300` popovers. Never skip a step.
-- Text is `--ink`, `--ink-secondary` or `--ink-muted`; every pair meets 4.5:1 on the grounds the
-  token's `usage` note names, in both themes. `--ink-muted` never sits on `--bg-300` in dark.
-- The one accent is amber: `--accent` as ink (kickers, links, active nav, icon tiles, focus ring),
-  `--accent-fill` with `--ink-inverse` as the primary button fill. The old violet survives only as
-  `--info` for the Running state.
-- Charts use `chartColors`, `chartAxisProps`, `chartGridProps` and `chartTooltipStyle` from the
-  ui package. Successful is the amber primary series; failed is `--chart-failed` (dark rust);
-  skipped is `--chart-skipped`. No other colour appears in a chart.
-- A subtle overlay is `color-mix(in srgb, var(--ink) 6%, transparent)`, never `rgba(255,255,255,…)`,
-  so it follows the theme.
-
-## 2. Rule: Components, not hand-styled markup
-
-- Use the library: `Button`/`ButtonLink`/`IconButton`, `Card`/`CardHead`/`CardTitle`/`CardMeta`,
-  `StatCard`/`StatStrip`, `PageHeader`/`Kicker`, `Badge`/`StatusBadge`/`Pill`, `Field`/`Input`/
-  `Textarea`/`Select`/`Checkbox`/`Segmented`, `Table`/`TableWrap`, `List`/`ListRow`, `Steps`,
-  `Notice`, `NavCard`, `EmptyState`/`ErrorState`/`LoadingState`/`LoadingPanel`/`Spinner`/`Skeleton`,
-  `Dialog`, `Dropdown`, `Tabs`/`Tab`, `Pagination`, the `AppShell`/`Sidebar`/`TreeNode` family, `GitHubIcon`.
-  An app keeps no UI primitives of its own: a missing piece is added to the library and released.
-  For client navigation pass `component={Link}` to `ButtonLink`, `NavCard` and `ListRow`.
-- Inline `style={{…}}` is for one-off layout (a gap, a max-width), never for colour, radius,
-  font or shadow. A block of inline styles that recurs is a missing component: add it to the
-  library, release, bump.
-- Status is a fixed vocabulary and is never colour alone: Completed (`success`), Failed (`error`),
-  Running (`running`), Degraded (`warning`), Skipped (`neutral`). `StatusBadge` maps the API's
-  status words; a list row carries a check or an x beside the word.
-- One `Button variant="primary"` per view, and it is the action the page exists for. One
-  `Card glow` per view at most.
-- Class names in `styles.css` (`.btn`, `.card`, `.stat-card`, `.badge-success`, `.tree-node.active`,
-  `.table`, `.input`) exist so older markup keeps working; new markup uses the components.
-- Dashboard-only styles (app shell, sidebar chrome, landing page, chat UI) live in
-  `src/app/styles/app.css`, `ai.css` and `search.css`. Anything two apps would want goes into the
-  design system instead.
-
-## 3. Rule: Theme follows the device, with no toggle
-
-`tokens.css` is dark by default and applies the light values under `prefers-color-scheme: light`
-when the page sets no `data-theme`. There is no theme toggle, no theme provider and no stored
-preference: a toggle needs a client component and a hydration-safe store for a choice the OS
-already makes. To pin a page, set `<html data-theme="dark">`. Every new colour must therefore be
-a token with both theme values, checked at 4.5:1.
-
-## 4. Rule: Absolute ban on hover levitation
+## 1. Rule: Absolute Ban on Hover Levitation & Moving Up
 
 > [!CAUTION]
-> **ZERO VERTICAL DISPLACEMENT ON HOVER**: Elements must NEVER move up or shift on hover.
-> `hover:-translate-y-*`, `translateY(-…)` in a `:hover` rule, float or bounce are forbidden.
+> **ZERO VERTICAL DISPLACEMENT ON HOVER**: Elements must NEVER move up or shift vertically on hover.
+> Physical levitation (`hover:-translate-y-*`, `translateY(-...)`, float, or bounce) is strictly forbidden.
 
-Hover changes colour, border or background only (`--border-strong`, `--bg-200`, `--accent`);
-the one glow is `--shadow-glow` on a `NavCard`. Press is `scale(0.98)`. Transitions are 150 ms on
-colour, border and background. Content reveals use `.reveal` with `.stagger-1` to `.stagger-5`, at
-most five items. Everything respects `prefers-reduced-motion`.
+### Why This Rule Exists:
+- **Visual Jitter & Disruption**: Shifting an element along the Y-axis disrupts reading flow, creates layout vibration when cursor hovers near edges, and causes optical disorientation.
+- **Cheap "AI-Generated" Hallmark**: Amateur AI-generated website templates frequently default to `hover:-translate-y-1` or `hover:-translate-y-2` as an unconsidered gimmick.
+- **Strictly Grounded Philosophy**: Components must remain firmly anchored in their layout plane.
 
-`src/app/styles/hover-motion.test.ts` fails the build for any `:hover` rule with a `translate` and
-any `hover:-translate-y-` utility.
+### Prohibited Patterns:
+```css
+/* FORBIDDEN: NEVER USE LEVITATION ON HOVER */
+.card:hover {
+  transform: translateY(-2px); /* BANNED */
+}
 
-## 5. Rule: Elimination of AI-generated aesthetic bloat
+/* FORBIDDEN: TAILWIND HOVER TRANSLATE-Y CLASSES */
+hover:-translate-y-0.5  /* BANNED */
+hover:-translate-y-1    /* BANNED */
+hover:-translate-y-2    /* BANNED */
+group-hover:-translate-y-0.5 /* BANNED */
+group-hover:-translate-y-1   /* BANNED */
+```
 
-1. **No fake macOS window chrome**: no red/yellow/green dots on cards or modals.
-2. **No decorative icon pollution**: no `Sparkles`, `Bot`, `Layers`, `Cpu`, `Wrench`, `ShieldCheck`
-   beside headings. Icons are functional (Lucide at 16px in controls, 18px in navigation, 20px in
-   icon tiles) and mark a state, a destination or an action. The product mark is `ObservatoryMark` from the library (one ink, `currentColor`); the GitHub mark is only for links to GitHub. Illustrations are the brand's orbit scenes, kept to the landing hero, a closing panel and a site's home; never behind data.
-3. **No fake status lights or filler metrics**: numbers on a page are real numbers from the API,
-   or the page shows nothing there.
-4. **No gradients, no coloured left borders, no 28px radii**: cards are flat `--bg-100` on a 1px
-   `--border` at `--radius-lg`; controls are `--radius-md`; badges are pills.
-5. **No emoji, no exclamation marks, no "Oops"**: sentence case, one italic `<em>` per headline at
-   most, errors that state what failed and the next action.
+### Approved Interactive Feedback:
+- **Border Highlighting**: Subtle border color transitions (e.g. `border-gray-800` to `border-violet-500/40`).
+- **Surface Overlays**: Subtle background tint or alpha layer shifts (e.g. `bg-gray-900/80` to `bg-gray-900/95`).
+- **Glow & Highlights**: Soft, non-disruptive blur shadows or opacity transitions (e.g. `opacity-0` to `opacity-25`).
+- **Typography Shifts**: Subtle text color accentuation (e.g. `text-white` to `text-violet-300`).
 
-## 6. Rule: Layout discipline
+---
 
-- Every app page renders inside `.page` (a column with `--space-8` gaps) within `.app-main`
-  (`--content-max` 1280px, 40px top, 64px bottom, `clamp(24px, 4vw, 48px)` gutter).
-- A page starts with `PageHeader` (kicker, serif title, one-line subtitle, up to three actions),
-  then a `.metric-grid.metric-grid--four` of `StatCard`s, then one wide card beside one narrow card
-  (`.split-grid--wide`), then secondary cards.
-- Grids: `.metric-grid--four` (2 columns under 960px, 1 under 640px), `--three`, `--two`, `--six`.
-  Tables collapse into label/value cards under 640px when each `<td>` has a `data-label`.
-- The public landing page (`src/app/(marketing)/page.tsx`) is the same system without the sidebar:
-  a 56px pill nav, a hero with `StatStrip` from real stats, a preview frame, four `NavCard`s, `Steps`,
-  a source panel and a closing `Card variant="hero" glow`. It never claims what the product does
-  not do (the source is proprietary-licensed and self-hostable, not "open source").
+## 2. Rule: Elimination of AI-Generated Aesthetic Bloat
 
-## 7. Automated verification
+Frontend code must avoid the stereotypical hallmarks of unreviewed AI outputs:
 
-`pnpm run lint` (Biome), `pnpm exec tsc --noEmit`, `pnpm test` (includes the hover-motion test)
-and `pnpm run build` run in the pre-commit hook and in CI. A change to the design system itself is
-made in the library repository; its merge publishes the packages and opens the upgrade pull request
-in this repository automatically (exact versions, regenerated lockfiles), so the two packages are
-never bumped by hand in a feature branch.
+1. **No Fake macOS Window Chrome**:
+   - Do NOT decorate cards or modals with fake red/yellow/green macOS terminal dots.
+2. **No Decorative Icon Pollution**:
+   - Do NOT decorate every heading, card title, and badge with generic Lucide icons (`Sparkles`, `Bot`, `Layers`, `Cpu`, `Wrench`, `ShieldCheck`).
+   - Use only functional UI controls (`Search`, `X`, `Copy`, `Check`, `ArrowUpRight`, authentic brand icons).
+3. **No Fake Status Lights & Metric Boxes**:
+   - Do NOT add pulsing radar green beacons ("Available for hire/collaboration") or arbitrary metric pills (`Verified Links`, `3 Categories`, `Open Source Contributor`).
+4. **No Rainbow Gradients or Harsh Halos**:
+   - Avoid loud multi-color gradients (`bg-gradient-to-r from-violet-600 to-cyan-500`). Use subtle single-tint or dual-tint background glows (`bg-violet-500/8`, `bg-teal-500/8`).
+
+---
+
+## 3. Rule: Layout Discipline & Unified Container Architecture
+
+1. **Page Container Consistency**:
+   - Every primary route must use the unified container constraint:
+     ```tsx
+     <div className="container mx-auto px-4 py-6 relative z-10 max-w-400">
+     ```
+2. **Responsive Card Grids**:
+   - Standard 4-column responsive grid matching the canonical `ListCard` structure:
+     ```tsx
+     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+     ```
+3. **Typography Standard**:
+   - Server-rendered headers with clean typography: `text-2xl font-bold text-white font-heading` with count and category summary.
+
+---
+
+## 4. Automated Verification & CI Rules
+
+Automated unit tests must assert that no components introduce `hover:-translate-y-` or `hover:translate-y-` regressions. Any pull request introducing hover vertical displacement must fail CI validation.
