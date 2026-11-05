@@ -102,9 +102,16 @@ any `hover:-translate-y-` utility.
 - Grids: `.metric-grid--four` (2 columns under 960px, 1 under 640px), `--three`, `--two`, `--six`.
   Tables collapse into label/value cards under 640px when each `<td>` has a `data-label`.
 - The public landing page (`src/app/(marketing)/page.tsx`) is the same system without the sidebar:
-  a 56px pill nav, a hero with `StatStrip` from real stats, a preview frame, four `NavCard`s, `Steps`,
-  a source panel and a closing `Card variant="hero" glow`. It never claims what the product does
-  not do (the source is proprietary-licensed and self-hostable, not "open source").
+  a 56px pill nav, a hero, a preview frame showing one dated sample run (`src/content/sample-run.ts`;
+  never live or invented numbers), four feature cards (plain `Card`s with `.landing-feature`: they
+  open nothing, so they are not `NavCard`s), the pre-order section (pay buttons only once pre-orders
+  are open: a payment link and a support email; otherwise a "not open yet" note with the waitlist
+  form or a documentation link, never a dead end), `Steps` and a
+  closing `Card variant="hero" glow`. The marketing pages are static (no `cookies()`/`headers()`,
+  `revalidate` on the marketing layout). Calls to action go to the pre-order section or the docs
+  site (`DOCS_URL`); never to the private repository (its URLs answer 404 to visitors) or into the
+  app. It never claims what the product does not do (the source is proprietary-licensed, not
+  "open source"; the product does not run on Vercel, Render or Neon).
 
 ## 7. Automated verification
 
