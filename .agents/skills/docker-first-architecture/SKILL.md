@@ -26,7 +26,7 @@ Every service—regardless of language or framework—must be fully containerize
 
 > [!IMPORTANT]
 > **OPTIMAL TOOLCHAIN MANDATE**: Always employ the fastest, most deterministic tools:
-> - **Node.js / TypeScript**: `pnpm` exclusively, pinned through the `packageManager` field in `package.json` and installed with `corepack install`. Never use `npm` or legacy `yarn`.
+> - **Node.js / TypeScript**: `pnpm` exclusively, pinned through the `packageManager` field in `package.json` with its sha512 (`corepack use pnpm@<version>` writes `pnpm@<version>+sha512.<hex>`) and installed with `corepack install`, which refuses a tarball with another hash. Never use `npm` or legacy `yarn`.
 > - **Python**: `uv` exclusively, from a pinned `ghcr.io/astral-sh/uv:<version>` image declared as a named stage (`FROM ghcr.io/astral-sh/uv:<version> AS uv`) so its pin is one line to update. Never use plain `pip` or slow virtualenv setups.
 > - **Go**: Static compilation (`CGO_ENABLED=0`, `-ldflags="-w -s"`). Never deploy dynamic glibc-dependent Go binaries, and use pure-Go drivers (for SQLite, `modernc.org/sqlite`, not the cgo-only `mattn/go-sqlite3`, which compiles to a stub without cgo).
 > - **Pinned bases**: never use moving tags such as `latest` or `golang:alpine`; pin to a release series (`alpine:3.24`, `node:22.23-alpine3.24`, `python:3.12-slim-trixie`, the Go builder at the `go.mod` toolchain release) and update them in the weekly dependency check.
