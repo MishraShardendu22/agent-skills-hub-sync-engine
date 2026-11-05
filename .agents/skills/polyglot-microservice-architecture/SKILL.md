@@ -59,7 +59,7 @@ This skill defines the architectural blueprint, service boundaries, inter-servic
 ## 3. Service Boundaries & Responsibilities
 
 ### Next.js Frontend (`frontend/` or `web/`)
-- **Framework**: Next.js App Router with Turbopack, Tailwind CSS, Biome linter, and TypeScript.
+- **Framework**: Next.js App Router with Turbopack, Tailwind CSS, Biome linter, and TypeScript; visual language from a separately released design system package (tokens plus components) rather than per-app styles.
 - **Responsibilities**:
   - Unified user interface, operational dashboards, and analytics charts.
   - Interactive AI chat streaming via Server-Sent Events (SSE).
@@ -100,7 +100,9 @@ This skill defines the architectural blueprint, service boundaries, inter-servic
    - `CREATE INDEX IF NOT EXISTS ...`
    - `ALTER TABLE ... ADD COLUMN IF NOT EXISTS ...`
 2. **Zero Destructive Commands**: Never execute `DROP TABLE`, `TRUNCATE`, or destructive column removals in automated production scripts.
-3. **Canonical Tables**:
+3. **Schema per Service**: each service writes only the tables of its own schema and reads another service's data through what that service publishes (a versioned view or an API), never its tables. Each service connects as its own database role with only the grants it uses, kept in one desired-state script applied after every migration run; a role with more power than grants can limit (superuser-like attributes, membership in a broader role) is refused, not used.
+4. **Locks on Live Tables**: a migration that changes several tables in use takes all their locks at once without waiting (`LOCK ... NOWAIT`, retried after a short pause within a bounded time) instead of one at a time. Holding one lock while waiting for the next deadlocks with the application's transactions and queues every request behind it.
+5. **Canonical Tables**:
    - `jobs` / `tasks`: Job identifiers, status transitions, payloads, timestamps, error records.
    - `execution_logs`: Structured, timestamped step execution logs for observability.
    - `analytics_snapshots`: Aggregated metrics and telemetry for dashboard reporting.

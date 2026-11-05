@@ -24,20 +24,19 @@ This skill establishes the **Zero-Reminder Automatic Synchronization Rule**: whe
 
 ## 2. Universal Subsystem-to-Documentation Synchronization Matrix
 
-Whenever modifying files in any subsystem, the agent MUST automatically update the corresponding documentation and skill files:
+Whenever modifying files in any subsystem, the agent MUST automatically update the corresponding documentation and skill files. A repository that keeps its own map from code paths to documents, checked in CI (for example a `doc-map.toml` with a `make docs-check` target), overrides this table; follow it first.
 
 | Subsystem Modified | Typical Source Locations | Target Documentation & Skill Updates |
 | :--- | :--- | :--- |
-| **Git Workflow & Branching** | `.githooks/`, `scripts/git-*.sh`, `.github/workflows/` | `.agents/skills/git-commit-workflow/SKILL.md`<br>`.agents/skills/git-branch-management/SKILL.md`<br>`.agents/skills/git-post-merge-cleanup/SKILL.md`<br>`docs/GIT_WORKFLOW.md`<br>`CHANGELOG.md` |
-| **Database & Migrations** | `db/migrations/`, `backend/db/`, `migrations/` | `.agents/skills/repository-maintenance/SKILL.md`<br>`.agents/skills/polyglot-microservice-architecture/SKILL.md`<br>`docs/ARCHITECTURE.md`<br>`README.md`<br>`CHANGELOG.md` |
-| **AI Agents & RAG** | `agent/`, `ai-service/`, `tools/`, `utils/rag.py` | `.agents/skills/agent-observatory-workflow/SKILL.md`<br>`docs/ARCHITECTURE.md`<br>`docs/AI_AGENT_WORKFLOW.md`<br>`CHANGELOG.md` |
-| **SaaS Connectors & Cloud Storage** | `connectors/`, `storage/`, `integrations/` | `.agents/skills/saas-and-mcp-architecture/SKILL.md`<br>`docs/ARCHITECTURE.md`<br>`CHANGELOG.md` |
-| **Model Context Protocol (MCP)** | `mcp/`, `tools/mcp/`, server handlers | `.agents/skills/saas-and-mcp-architecture/SKILL.md`<br>`docs/MCP_GUIDE.md`<br>`CHANGELOG.md` |
-| **Backend & REST/WebSocket APIs** | `backend/`, `handlers/`, `routes/`, `api/` | `docs/API_REFERENCE.md`<br>`docs/ARCHITECTURE.md`<br>`backend/README.md`<br>`CHANGELOG.md` |
-| **Workers & Background Daemons** | `worker/`, `cmd/worker/`, `service/` | `docs/ARCHITECTURE.md`<br>`worker/README.md`<br>`CHANGELOG.md` |
-| **Frontend & UI Components** | `frontend/`, `web/`, `src/components/` | `README.md`<br>`frontend/README.md`<br>`CHANGELOG.md` |
-| **CI/CD & Containerization** | `.github/workflows/`, `*Dockerfile`, `docker-compose.yml`, `render.yaml`, `vercel.json` | `.agents/skills/ci-cd-workflow/SKILL.md`<br>`.agents/skills/docker-first-architecture/SKILL.md`<br>`docs/DEPLOYMENT_GUIDE.md`<br>`CHANGELOG.md` |
-
+| **Git Workflow & Branching** | `.githooks/`, `scripts/git-*.sh`, `.github/workflows/` | `.agents/skills/git-commit-workflow/SKILL.md`<br>`.agents/skills/git-branch-management/SKILL.md`<br>`.agents/skills/git-post-merge-cleanup/SKILL.md`<br>the contributing or Git workflow guide, where the repository has one<br>`CHANGELOG.md` |
+| **Database & Migrations** | migration folders, database access code | `.agents/skills/repository-maintenance/SKILL.md`<br>`.agents/skills/polyglot-microservice-architecture/SKILL.md`<br>the data-ownership or schema document (and a generated schema inventory, if any)<br>`README.md`<br>`CHANGELOG.md` |
+| **AI Agents & RAG** | agent, tool and retrieval code | `.agents/skills/agent-observatory-workflow/SKILL.md`<br>the AI service's README or architecture section<br>`CHANGELOG.md` |
+| **SaaS Connectors & Cloud Storage** | connectors, storage sinks, integrations | `.agents/skills/saas-and-mcp-architecture/SKILL.md`<br>the architecture document that describes storage<br>`CHANGELOG.md` |
+| **Model Context Protocol (MCP)** | the MCP server, its tools and handlers | `.agents/skills/saas-and-mcp-architecture/SKILL.md`<br>the MCP server's design document<br>`CHANGELOG.md` |
+| **Backend & REST/WebSocket APIs** | handlers, routes, middleware | the API reference<br>the architecture document's runtime flows<br>the service's README<br>`CHANGELOG.md` |
+| **Workers & Background Daemons** | worker commands and services | the worker's README and its contract document<br>`CHANGELOG.md` |
+| **Frontend & UI Components** | web app pages and components | `README.md`<br>the web app's README<br>`CHANGELOG.md` |
+| **CI/CD & Containerization** | `.github/workflows/`, `*Dockerfile`, compose files, platform configuration | `.agents/skills/ci-cd-workflow/SKILL.md`<br>`.agents/skills/docker-first-architecture/SKILL.md`<br>the deployment and operations guides<br>`CHANGELOG.md` |
 ---
 
 ## 3. Autonomous Skill Creation & Evolution Rule

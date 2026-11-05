@@ -34,6 +34,7 @@ This skill provides procedures for maintaining database integrity, executing dat
   - `CREATE TABLE IF NOT EXISTS ...`
   - `CREATE INDEX IF NOT EXISTS ...`
   - `ALTER TABLE ... ADD COLUMN IF NOT EXISTS ...`
+- A catalog check (`information_schema`) names the schema it inspects. Without that filter, a table or view of the same name in another schema answers instead.
 
 ---
 

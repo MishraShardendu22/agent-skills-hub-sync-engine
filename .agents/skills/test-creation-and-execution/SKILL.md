@@ -31,6 +31,7 @@ This skill defines the testing standards, frameworks, conventions, and execution
 | **Python Services** | `ai-service/`, `agent/` | Python `unittest` / `pytest`, `unittest.mock`, `httpx` | `uv run pytest` |
 | **AI Agent & RAG** | `agent/`, `evals/` | Tool-calling mocks, evaluation harness | `make test-agents` |
 | **Frontend & Web** | `frontend/`, `web/` | Vitest, TypeScript `tsc` | `pnpm exec vitest run` |
+| **Browser (end to end)** | `tests/e2e/` | Playwright, `@axe-core/playwright` | `make e2e` |
 
 ---
 
@@ -115,4 +116,13 @@ uv run pytest
 
 # 4. Run Frontend test suite
 pnpm run test
+
+# 5. Drive production builds of the web apps in a browser (Playwright)
+make e2e
 ```
+
+### Browser Test Rules
+- Test production builds served the way they are deployed, never a dev server.
+- Answer every analytics or tracking request inside the browser (`context.route`) and assert on what was captured; never send to the real service, also when testing a live site.
+- Fail every test on console errors and failed same-origin requests; list a known problem with its reason instead of loosening the check.
+- Keep an accessibility baseline explicit: each known violation listed with what fails, and the test fails when a listed one is fixed so the list cannot go stale.

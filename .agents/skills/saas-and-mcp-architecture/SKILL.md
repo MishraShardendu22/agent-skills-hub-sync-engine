@@ -46,7 +46,7 @@ When extending file archiving and storage destinations:
 
 When adding MCP tools to AI agents:
 
-1. **Protocol Adherence**: Connect via standard MCP JSON-RPC protocol over Stdio or Server-Sent Events (SSE).
+1. **Protocol Adherence**: Connect via standard MCP JSON-RPC protocol over stdio or Streamable HTTP. Serve Streamable HTTP in stateless mode (no session state in memory) when the server may run as several instances or serverless functions; the legacy SSE transport keeps sessions in one process and only works on a single instance. Put bearer-token authentication in front of every HTTP endpoint except health.
 2. **Human-In-The-Loop (HITL) Enforcement**:
    - Read-only tools (`query_state`, `list_records`, `inspect_telemetry`) execute automatically.
    - Destructive or external actions (`restart_service`, `restore_snapshot`, `trigger_incident_alert`, `apply_schema_migration`) MUST trigger the HITL confirmation protocol.
@@ -64,4 +64,6 @@ When exposing a service's functionality as an MCP server to external IDEs or age
   - `trigger_job`: Autonomous execution of specified jobs or workflows.
   - `search_knowledge_base`: Hybrid pgvector search across system logs.
   - `verify_data_integrity`: Checksum and schema validation.
-- Support both standard stdio transport for local CLI/IDE agents and HTTP/SSE transport for web-based agents.
+- Support both standard stdio transport for local CLI/IDE agents and stateless Streamable HTTP for network agents.
+- Tools must report failures honestly: a tool that could not do its work returns a tool error, never a success message such as "accepted" or "queued".
+- Resolve any file a tool reads by exact name inside a configured root (use `os.Root` in Go); never join user input into a search path.

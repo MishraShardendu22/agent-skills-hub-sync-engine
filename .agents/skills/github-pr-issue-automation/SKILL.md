@@ -21,13 +21,8 @@ When any PR or issue is opened, the GitHub Actions triage automation executes au
 2. **Conventional Type Labeling**:
    - Inspects the PR title prefix (`feat:`, `fix:`, `perf:`, `refactor:`, `docs:`, `db:`, `ci:`, `test:`, `ui:`) and automatically applies the matching color-coded `type/*` label.
 3. **Subsystem / Area Labeling**:
-   - Inspects modified files in the pull request:
-     - `frontend/**`, `web/**`, `src/**` -> `area/frontend`
-     - `backend/**`, `api/**`, `pkg/**` -> `area/backend`
-     - `agent/**`, `ai-service/**` -> `area/ai-agent`
-     - `worker/**`, `cmd/**` -> `area/worker`
-     - `.github/**`, `scripts/**`, `Makefile` -> `area/ci-cd`
-     - `docs/**`, `.agents/skills/**` -> `area/documentation`
+   - Maps each modified file to an `area/*` label by its path: the web app to `area/frontend`, the API and MCP services to `area/backend`, the AI service to `area/observatory`, the backup worker to `area/backup-worker`, `.github/`, `scripts/` and `Makefile` to `area/ci-cd`, and `docs/`, `.agents/skills/` and other Markdown to `area/documentation`.
+   - The labeler workflow (`.github/workflows/pr-triage-and-labeler.yml`) holds the exact path rules and `scripts/github-labels-sync.sh` the label set; where they differ from this list, they are right.
 4. **Automated Diff Size Classification**:
    - Computes total lines changed:
      - `< 50 lines` -> `size/XS`
@@ -97,8 +92,8 @@ Issues are created through standardized YAML issue forms in `.github/ISSUE_TEMPL
 | File | Purpose | Trigger |
 | :--- | :--- | :--- |
 | `pr-branch-cleanup.yml` | Auto-deletes remote feature branch when a PR is closed (merged or abandoned). Prevents stale branch buildup. | `pull_request: [closed]` |
-| `jules-pr-review.yml` | Assigns `@google-labs-jules[bot]` as a reviewer on every non-draft PR. This triggers the Jules 38-dimension autonomous review loop. | `pull_request: [opened, synchronize, reopened]` |
-| `ci.yml` | Runs the full test and build pipeline (gofmt, `go test -race`, `go build`, `go mod tidy`) as an enforced quality gate before merging. | `push` (any branch), `pull_request` (→ `main`) |
+| `pr-review.yml` | Claude reviews every non-draft PR from the repository (inline comments and one summary it rewrites on each push) and, on an `@claude` comment from the owner, answers or pushes fixes. Skips with a notice without `CLAUDE_CODE_OAUTH_TOKEN`. | `pull_request: [opened, synchronize, ready_for_review, reopened]`, owner comments |
+| `ci.yml` | Runs the path-filtered test and build pipeline (gofmt, `go mod tidy`, `go test -race`, `go build`, image smoke tests) plus one aggregate status job as the enforced quality gate. | `push` (any branch), `pull_request` (→ `main`, forks only) |
 
 ### Verification Command
 
@@ -108,14 +103,14 @@ To confirm all three workflows exist in a repository:
 ls .github/workflows/
 # Expected output includes:
 #   ci.yml
-#   jules-pr-review.yml
 #   pr-branch-cleanup.yml
+#   pr-review.yml
 ```
 
 ### Canonical References
 
 - **`pr-branch-cleanup.yml`**: See `.agents/skills/git-post-merge-cleanup/SKILL.md` Section 4 for full YAML and safety details.
-- **`jules-pr-review.yml`**: See `.agents/skills/jules-ai-engineering-workflow/SKILL.md` Section 5 for full YAML, Jules app installation, and draft PR behavior.
+- **`pr-review.yml`**: See `docs/architecture/current/06-operations.md` (Pull request review) and `.agents/skills/ci-cd-workflow/SKILL.md` rule 14 (AI agents in workflows).
 - **`ci.yml`**: See `.agents/skills/ci-cd-workflow/SKILL.md` Section 4 for DSA-specific CI job structure and local mirrors.
 
 ### Agent Responsibility

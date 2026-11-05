@@ -127,7 +127,7 @@ on:
     types: [closed]
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   cleanup-closed-branch:
@@ -136,12 +136,13 @@ jobs:
       github.event.pull_request.head.repo.full_name == github.repository &&
       github.event.pull_request.head.ref != 'main' &&
       github.event.pull_request.head.ref != 'master'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
     steps:
       - name: "Delete Remote Feature Branch"
-        uses: actions/github-script@v7
+        uses: actions/github-script@<full-commit-sha> # vX.Y.Z (current major, pinned by SHA)
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const headRef = context.payload.pull_request.head.ref;
             try {
@@ -150,12 +151,12 @@ jobs:
                 repo: context.repo.repo,
                 ref: `heads/${headRef}`
               });
-              core.info(`✅ Successfully deleted remote branch: ${headRef}`);
+              core.info(`[SUCCESS] Deleted remote branch: ${headRef}`);
             } catch (error) {
               if (error.status === 422 || error.status === 404) {
-                core.info(`ℹ️  Remote branch '${headRef}' was already deleted — skipping.`);
+                core.info(`[INFO] Remote branch '${headRef}' was already deleted; skipping.`);
               } else {
-                core.setFailed(`❌ Failed to delete remote branch '${headRef}': ${error.message}`);
+                core.setFailed(`[ERROR] Failed to delete remote branch '${headRef}': ${error.message}`);
               }
             }
 ```

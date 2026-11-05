@@ -18,10 +18,13 @@ Every deployable unit has a stable, product-prefixed name. Generic names such as
 | Responsibility | Canonical name | Canonical directory |
 |---|---|---|
 | Next.js dashboard | `github-backup-dashboard` | `src/apps/github-backup-dashboard/` |
-| Go REST and WebSocket API | `github-backup-api` | `src/backend/github-backup-api/` |
+| Go REST and WebSocket API (the bundle) | `github-backup-api` | `src/backend/github-backup-api/` |
+| Go API services split from it (ADR 0002, 0017, 0018) | `github-backup-identity`, `github-backup-runs`, `github-backup-insights`, `github-backup-notify`, `github-backup-billing` | `src/backend/github-backup-api/` (one codebase) |
 | Python AI and RAG service | `github-backup-observatory` | `src/services/github-backup-observatory/` |
 | Go scheduled backup engine | `github-backup-worker` | `src/services/github-backup-worker/` |
 | Go MCP integration server | `github-backup-mcp` | `src/backend/github-backup-mcp/` |
+| Design system website (Next.js static export) | `github-backup-design` | `src/apps/github-backup-design/` |
+| Documentation website (Docusaurus) | `github-backup-docs` | `src/apps/github-backup-docs/` |
 
 The repository uses `src/apps/` for user-facing applications, `src/services/` for runtime workers and AI services, and `src/backend/` for the REST API and MCP integration server.
 
@@ -30,9 +33,10 @@ The repository uses `src/apps/` for user-facing applications, `src/services/` fo
 1. Deployable directories use lowercase kebab-case and begin with `github-backup-`.
 2. Go command directories use the exact executable name under `cmd/`:
    - `cmd/github-backup-api/`
+   - `cmd/github-backup-identity/`, `cmd/github-backup-runs/`, `cmd/github-backup-insights/`, `cmd/github-backup-notify/`, `cmd/github-backup-billing/` (in `src/backend/github-backup-api/`)
    - `cmd/github-backup-worker/`
    - `cmd/github-backup-mcp/`
-3. Built binaries use the same canonical executable names: `github-backup-api`, `github-backup-worker`, and `github-backup-mcp`.
+3. Built binaries use the same canonical executable names: `github-backup-api`, `github-backup-identity`, `github-backup-runs`, `github-backup-insights`, `github-backup-notify`, `github-backup-billing`, `github-backup-worker`, and `github-backup-mcp`.
 4. Docker Compose service keys, container names, Render service names, and CI build labels use the canonical product name.
 5. Existing environment variable names remain unchanged unless a separate configuration migration explicitly requires a rename.
 6. Internal Go packages use responsibility names such as `transport`, `repository`, `application`, and `domain`; avoid catch-all packages named `util`, `common`, or `misc` for new code.

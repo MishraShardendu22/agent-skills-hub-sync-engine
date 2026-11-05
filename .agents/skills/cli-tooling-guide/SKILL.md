@@ -3,7 +3,7 @@ name: cli-tooling-guide
 scope: generic
 description: >-
   Standard operating guide for first-class authenticated CLI tools in the repository:
-  GitHub CLI (gh), Google Jules CLI (jules), Vercel CLI (vercel), Neon CLI (neonctl), Docker CLI (docker), uv, and pnpm.
+  GitHub CLI (gh), Vercel CLI (vercel), Neon CLI (neonctl), Docker CLI (docker), uv, and pnpm.
 ---
 
 # Authenticated CLI Tooling & Operations Guide
@@ -16,7 +16,6 @@ This repository treats specialized developer CLI tools as first-class automation
 
 | Tool | CLI Binary | Auth Check Command | Primary Usage in System |
 |---|---|---|---|
-| **Google Jules CLI** | `jules` | `jules version` | Autonomous 38-dimension code review, remediation sessions, patch application |
 | **GitHub CLI** | `gh` | `gh auth status` | Pull requests, issues, repo management, label sync, Actions monitoring |
 | **Vercel CLI** | `vercel` | `vercel whoami` | Frontend and serverless deployments, preview inspection |
 | **Neon CLI** | `neonctl` | `neonctl me` | Database branching, connection strings, migrations, schema isolation |
@@ -29,25 +28,7 @@ This repository treats specialized developer CLI tools as first-class automation
 
 ## 2. Command Reference by Tool
 
-### A. Google Jules CLI (`jules`)
-* **Review PR**:
-  ```bash
-  ./scripts/jules-review-loop.sh --pr <pr-number>
-  ```
-* **Dispatch Remediation Task**:
-  ```bash
-  jules new --repo <owner>/<repo> "<task-prompt>"
-  ```
-* **List Active Sessions**:
-  ```bash
-  jules remote list --session
-  ```
-* **Pull and Apply Session Patch**:
-  ```bash
-  jules remote pull --session <session-id> --apply
-  ```
-
-### B. GitHub CLI (`gh`)
+### A. GitHub CLI (`gh`)
 * **Create Pull Request**:
   ```bash
   gh pr create --base main --head <branch-name> --assignee "@me" --label "type/<type>,area/<area>,status/ready-for-review" --body "<body-markdown>"
@@ -62,7 +43,7 @@ This repository treats specialized developer CLI tools as first-class automation
   gh run list --limit 10
   ```
 
-### C. Neon CLI (`neonctl`)
+### B. Neon CLI (`neonctl`)
 * **List Branches**:
   ```bash
   neonctl branches list --project-id <project-id> --output json
@@ -76,7 +57,7 @@ This repository treats specialized developer CLI tools as first-class automation
   neonctl connection-string <branch-name> --project-id <project-id> --ssl require
   ```
 
-### D. Vercel CLI (`vercel`)
+### C. Vercel CLI (`vercel`)
 * **Inspect Deployments**:
   ```bash
   vercel ls
@@ -86,7 +67,7 @@ This repository treats specialized developer CLI tools as first-class automation
   vercel deploy
   ```
 
-### E. Python Package Manager (`uv`)
+### D. Python Package Manager (`uv`)
 * **Strict Rule**: Always use `uv`. Never invoke bare `pip install` or `python -m venv`.
 * **Environment & Run**:
   ```bash
@@ -96,7 +77,7 @@ This repository treats specialized developer CLI tools as first-class automation
   uv add <pkg>
   ```
 
-### F. Node.js Package Manager (`pnpm`)
+### E. Node.js Package Manager (`pnpm`)
 * **Strict Rule**: Always use `pnpm`. Never invoke `npm` or `yarn`. Only commit `pnpm-lock.yaml`.
 * **Dependencies & Build**:
   ```bash
@@ -117,3 +98,4 @@ If any CLI tool reports authentication expiration or failure, alert the human de
 2. **Vercel CLI**: `vercel login`
 3. **Neon CLI**: `neonctl auth`
 4. **Docker Hub**: `docker login`
+5. **Project CLIs with stored logins** (OS keychain or a private credentials file): when one reports an expired, revoked or unreadable login, give the human the project's documented login command (for example a `make login-<service>` target). Never work around it by pasting tokens into `.env` files, and never run interactive browser logins on the human's behalf.
