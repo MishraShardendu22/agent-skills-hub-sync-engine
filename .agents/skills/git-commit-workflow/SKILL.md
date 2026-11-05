@@ -65,7 +65,7 @@ All commits in repositories adhering to this standard MUST be classified under o
   - Performance: `perf(<scope>): <short imperative description>`
   - Restructuring: `refactor(<scope>): <short imperative description>`
 - **Criteria**: Code maintains 100% backward compatibility and passes existing test suites while delivering measurable efficiency or architectural clarity gains.
-- **Allowed Scopes**: `db`, `vector`, `api`, `backend`, `worker`, `cache`, `websocket`
+- **Allowed Scopes**: `db`, `vector`, `api`, `backend`, `worker`, `cache`, `websocket`, `frontend`, `agent`
 - **Examples**:
   - `perf(db): add GIN index on logs for sub-millisecond full-text queries`
   - `perf(agent): cache model capability registry in-memory`
@@ -104,7 +104,7 @@ All commits in repositories adhering to this standard MUST be classified under o
 - **Purpose**: Managing GitHub Actions workflows, multi-stage Dockerfiles, Docker Compose files, deployment manifests, and Git hooks.
 - **Format**: `ci(<scope>): <short imperative description>` or `feat(deploy): <short imperative description>`
 - **Criteria**: Infrastructure as Code, automation pipelines, build tooling, and container packaging.
-- **Allowed Scopes**: `actions`, `docker`, `deploy`, `hooks`, `precommit`
+- **Allowed Scopes**: `actions`, `docker`, `deploy`, `hooks`, `precommit`, `review`, `security`
 - **Examples**:
   - `ci(actions): implement production-grade automated CI/CD pipeline`
   - `feat(deploy): configure deployment manifests and runtime configurations`
