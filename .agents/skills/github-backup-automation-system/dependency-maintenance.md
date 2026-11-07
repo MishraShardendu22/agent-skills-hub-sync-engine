@@ -30,7 +30,7 @@ New advisories arrive for unchanged code (the Security Audit workflow goes red o
 | `deferred` | Updates that must wait: dependency, versions, the reason, `deferred_on` and `revisit_on`. |
 | `history` | Every applied update, newest last. |
 
-The ledger never guesses: `scan` reads the manifests and lockfiles, `record`/`defer`/`resolve`/`checked` are written by the agent that did the work. `tests/test_deps_ledger.py` fails when the committed ledger and the committed manifests disagree, so a dependency change without `make deps-scan` does not pass the hook.
+The ledger never guesses: `scan` reads the manifests and lockfiles, `record`/`defer`/`resolve`/`checked` are written by the agent that did the work. `tests/test_deps_ledger.py` fails when the committed ledger and the committed manifests disagree (direct dependencies and `pnpm.overrides`), so a dependency or override change without `make deps-scan` does not pass the hook.
 
 ## 3. When the check runs
 
@@ -45,7 +45,7 @@ The check is weekly and belongs to **Monday**. It is done by the **first agent r
 
 ## 4. The routine (`make deps-check` runs steps 1 to 3)
 
-1. **Scan**: `make deps-scan` (`deps-ledger.py scan`) shows direct dependencies that changed since the ledger was written and new or removed ones.
+1. **Scan**: `make deps-scan` (`deps-ledger.py scan`) shows direct dependencies that changed since the ledger was written and new or removed ones, and `pnpm.overrides` entries that were added, removed or changed (key or value).
 2. **Outdated**: `make deps-outdated` lists newer versions of direct dependencies (Go: `go list -m -u`; pnpm apps: `pnpm outdated`; Observatory: `uv pip list --outdated` in its `.venv`). Docker base images and GitHub Actions are listed with their pins only; check their upstream releases and update the pins by hand.
 3. **Audit**: `make deps-audit` runs what the Security Audit workflow runs: `pnpm audit --audit-level high` per app (the docs site's job is advisory, like `blocking: false` in the workflow), `pip-audit` on the Observatory lock with the workflow's `--ignore-vuln` list, `govulncheck ./...`, and Trivy when it is installed.
 4. **Decide**, for every newer version and every advisory, with the rules in section 5.
