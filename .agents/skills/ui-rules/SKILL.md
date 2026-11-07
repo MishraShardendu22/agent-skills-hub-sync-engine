@@ -46,6 +46,23 @@ the `anti-slop` skill, checked by `scripts/check-anti-slop.sh` (or `make anti-sl
   `Dialog`, `Dropdown`, `Tabs`/`Tab`, `Pagination`, the `AppShell`/`Sidebar`/`TreeNode` family, `GitHubIcon`.
   An app keeps no UI primitives of its own: a missing piece is added to the library and released.
   For client navigation pass `component={Link}` to `ButtonLink`, `NavCard` and `ListRow`.
+- The public pages' browser JavaScript has a budget (`lighthouserc.json`, 120 KB of script), and
+  React and Next.js take about 108 KB brotli of it. Import components from the package root,
+  `@mishrashardendu22/observatory-ui`: 0.3.0 has no per-component entry points, and the build keeps
+  only the components a page imports. The public pages, the analytics settings panel and the root
+  `not-found.tsx` draw icons from `src/components/icons.tsx` (inline SVG with lucide's paths and
+  `lucide lucide-<name>` classes), never from `lucide-react`: lucide-react 1.67 marks its `Icon`
+  "use client", so any lucide icon, even one a server component draws, ships `Icon` (about 1 KB
+  brotli) to every page. An icon those pages need is added to `icons.tsx` with a case in
+  `icons.test.ts`; the signed-in app keeps `lucide-react`. A client component still takes its icons
+  as props from the server component above it where it can (`MobileMenu`'s `openIcon` and
+  `closeIcon`). UI that appears only after a click loads with `React.lazy` when it is first needed
+  (`ConsentPanel`): the parent handles Escape from the moment it opens, a failed import resolves
+  to a small panel that says so (never a throw, which reaches Next.js's error page and replaces the
+  page), and the button that opens it starts the fetch on hover and focus. Do not add
+  `next/dynamic` to a public page, its loader adds about 2 KB brotli to every page. Browser code on
+  every page imports `src/config/analytics-env.ts`, not `src/config/env.ts`.
+  `src/app/public-js.test.ts` checks the imports behind these rules.
 - Inline `style={{…}}` is for one-off layout (a gap, a max-width), never for colour, radius,
   font or shadow. A block of inline styles that recurs is a missing component: add it to the
   library, release, bump.
