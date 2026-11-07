@@ -50,7 +50,7 @@ This skill defines the architectural blueprint, service boundaries, inter-servic
                 ▼                             ▼
 ┌─────────────────────────────┐ ┌─────────────────────────────┐
 │       AI Model Providers    │ │    Notifications & Webhooks │
-│  (Multi-Key Failover Pools) │ │     (SMTP / Slack / Alert)  │
+│  (Multi-Key Failover Pools) │ │ (Slack / Discord / Webhook) │
 └─────────────────────────────┘ └─────────────────────────────┘
 ```
 

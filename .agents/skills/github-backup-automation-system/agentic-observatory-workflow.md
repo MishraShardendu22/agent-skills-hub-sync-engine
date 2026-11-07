@@ -30,6 +30,8 @@ description: >-
 2. Export the tool in `src/services/github-backup-observatory/data/tools/__init__.py`.
 3. Register the tool in `TOOLS` within `src/services/github-backup-observatory/agent/openrouter.py`.
 
+Never add a tool that sends e-mail or any other message out of the product (ADR 0020). A report is the agent's answer: the system prompt (`agent/prompts.py`) tells the model to write it in the chat and point to the message's Download button. `POST /reports` only stores a report, which `GET /reports/{id}/download` returns to clients that call the Observatory directly (the dashboard's proxy does not forward `/reports`).
+
 ---
 
 ## 2. Tool-Calling RAG & Knowledge Base Search
@@ -44,14 +46,14 @@ The Observatory agent calls `hybrid_search_knowledge_base` during reasoning loop
 
 ## 3. Human-In-The-Loop (HITL) Confirmations
 
-Sensitive actions (tools in `CONFIRMATION_REQUIRED_TOOLS` in `agent/openrouter.py`, today `send_report_email`) require user confirmation:
+Sensitive actions (tools in `CONFIRMATION_REQUIRED_TOOLS` in `agent/openrouter.py`; the set is empty today, and the tests register the test-only tool `publish_test_note` through the `gated_tool` fixture) require user confirmation:
 1. `stream_agent()` stores a pending row with `data.confirmations.create_confirmation()` (table `ai_tool_confirmations`: `confirm_id`, `session_id`, `username`, `tool_name`, `args`, `status`, `created_at`, `decided_at`) and yields:
    ```json
-   {"type": "confirm_required", "confirm_id": "<uuid>", "name": "send_report_email", "args": {}, "tool_call_id": "<id>"}
+   {"type": "confirm_required", "confirm_id": "<uuid>", "name": "<tool name>", "args": {}, "tool_call_id": "<id>"}
    ```
 2. The dashboard answers with `POST /chat/confirm` and `{"confirm_id": "<uuid>", "approve": true}` (`approved` is an accepted alias; keep `approve`, the deployed dashboard sends it). `data.confirmations.decide()` only lets the user who started the turn decide.
 3. The stream waits with `wait_for_decision(confirm_id, timeout=HITL_CONFIRMATION_TIMEOUT_SECONDS, poll_interval=HITL_POLL_INTERVAL_SECONDS)`. A timeout or a disconnect marks the row `expired`, which counts as rejected; the tool then ends with `tool_end` and `success: false`.
-4. `POST /chat` and `POST /api/tools/execute` refuse these tools. Email recipients must be in the `SMTP_TO` allowlist.
+4. `POST /chat` and `POST /api/tools/execute` refuse these tools.
 
 Every event of one tool call carries the same `tool_call_id` (`ensure_tool_call_ids()` fills in a UUID when the model sent none). Keep the SSE shapes additive; the dashboard depends on them (`docs/STREAMING_ARCHITECTURE.md`).
 
@@ -78,7 +80,7 @@ The observatory runs no DDL. New tables and indexes go into a new idempotent mig
 ```bash
 cd src/services/github-backup-observatory
 
-# Unit tests (network blocked; OpenRouter, the Go backend and SMTP are mocked)
+# Unit tests (network blocked; OpenRouter and the Go backend are mocked)
 uv run pytest
 
 # Integration tests: disposable database built from the migration files
