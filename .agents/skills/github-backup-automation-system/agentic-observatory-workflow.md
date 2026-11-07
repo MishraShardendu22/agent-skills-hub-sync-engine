@@ -62,7 +62,7 @@ Every event of one tool call carries the same `tool_call_id` (`ensure_tool_call_
 ## 4. Multi-Key OpenRouter Failover
 
 Centralized in `src/services/github-backup-observatory/utils/openrouter_keys.py`:
-- `OpenRouterCredentials`: the keys one request may use, resolved per request by `services.openrouter_accounts.resolve_credentials(username)` (the user's own key, else `server_credentials()`).
+- `OpenRouterCredentials`: the keys one request may use, resolved per request by `services.openrouter_accounts.resolve_credentials(account_id)`: the account's own key (signed in with OpenRouter or pasted, `POST /me/openrouter/key`), else `pool_credentials_for(account_id)`, which is the server pool only for the owner's account with `OPENROUTER_ALLOW_SERVER_KEYS=true` (default `false`) and no key for every other account. Chat routes call `require_key()` so a turn without a key is a plain `503 OPENROUTER_NOT_CONFIGURED` before the stream starts; never route another account onto `server_credentials()`.
 - `call_with_failover(credentials, operation, purpose=...)`: runs `operation(key)`; moves to the next server key only on `401`, `402` or `429`. A `400` raises `OpenRouterRequestRejected`; a user key is never rotated (`UserKeyRejected` 403, `UserKeyOutOfCredits` 402, `UserKeyRateLimited` 429).
 - `use_credentials(credentials)`: sets the credentials for code that cannot take them as an argument (LangChain tools); pass them explicitly everywhere else.
 - HTTP goes through `utils/openrouter_http.py` (shared clients, attribution headers, `api_url()` on `OPENROUTER_API_BASE`).

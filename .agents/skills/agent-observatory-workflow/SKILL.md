@@ -85,9 +85,9 @@ For sensitive or destructive actions (e.g., dispatching external emails, modifyi
 ## 5. Multi-Key API Failover
 
 When interacting with external LLM APIs (e.g. OpenRouter, OpenAI, Anthropic):
-- Resolve the keys for each request (the user's own key, or the server pool) and pass them explicitly; never keep a process-wide "current key" that concurrent requests change.
+- Resolve the keys for each request (the user's own key, or the server pool only where the operator allowed it for that account) and pass them explicitly; never keep a process-wide "current key" that concurrent requests change.
 - Rotate to the next key only on HTTP `401`, `402` or `429`. Other errors, such as `400` for a bad request, are the caller's problem and must be returned, not retried on every key.
-- A user's own key is never replaced by another user's key or, unless configured, by the server pool.
+- A user's own key is never replaced by another user's key or, unless configured, by the server pool. In a bring-your-own-key product, never spend the operator's pool on other users: a user without a key gets a clear error that tells them how to add one.
 - Give every call a timeout, disable hidden SDK retries, and put a deadline on the whole agent turn.
 
 ---
