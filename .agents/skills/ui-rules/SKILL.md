@@ -108,9 +108,9 @@ any `hover:-translate-y-` utility.
 - The public landing page (`src/app/(marketing)/page.tsx`) is the same system without the sidebar:
   a 56px pill nav, a hero, a preview frame showing one dated sample run (`src/content/sample-run.ts`;
   never live or invented numbers), four feature cards (plain `Card`s with `.landing-feature`: they
-  open nothing, so they are not `NavCard`s), the pre-order section (pay buttons only once pre-orders
-  are open: a payment link and a support email; otherwise a "not open yet" note with the waitlist
-  form or a documentation link, never a dead end), `Steps` and a
+  open nothing, so they are not `NavCard`s), the price band (`#preorder`, `PreorderSection.tsx`, at
+  most 200px tall on desktop: the founding price, the three guarantee lines, the one action this
+  build offers and a link to `/pricing`, which is its button when there is no other action), `Steps` and a
   closing `Card variant="hero" glow`. The marketing pages are static (no `cookies()`/`headers()`,
   `revalidate` on the marketing layout). Calls to action go to the pre-order section or the docs
   site (`DOCS_URL`); never to the private repository (its URLs answer 404 to visitors) or into the
@@ -128,6 +128,34 @@ any `hover:-translate-y-` utility.
   1200px container (`.landing__inner`), 12 columns of 74px with 24px gutters (`.layout-grid`,
   8 on tablets and 4 on phones; a child sets `--span`), a 680px prose measure, 44px touch targets
   on phones. Breakpoints are 640px and 1024px. It adds no colour: the tokens of §1 only.
+- `/pricing` (`src/app/(marketing)/pricing/page.tsx`) has one plan and no tiers, monthly toggle or
+  "most popular" badge. The header (`display-2` h1, the product model in one line, the currency
+  buttons) sits beside the plan card from 1024px (`--plan-card-max` 560px, the page 1080px), the
+  card before the limits on phones. Both currencies are in the HTML: `CurrencySwap` puts them in
+  one grid cell and marketing.css hides the one that `data-currency` on `<html>` does not name,
+  with `visibility`, so a switch moves nothing (CLS 0). The root layout's head script
+  (`CURRENCY_SCRIPT` in `src/lib/currency.ts`) sets that attribute before first paint from the
+  stored choice or a guess from the time zone and language, never a geo header, so a visitor
+  outside India never sees the rupee price first; `CurrencyScope` (the one client island) keeps
+  the buttons in step and changes the attribute on a click. `currency.test.ts` runs the script
+  against `browserCurrency()`. "What you get" is two lists side by side from 768px, Works
+  today and Planned for launch, each under its icon and word, not a table. The nav marks
+  Pricing with `aria-current` there and its button leads to the docs (`current="/pricing"`).
+  Table heads and the phone labels are the `small` step in sentence case, and hyphenated terms
+  stay on one line (`KeepHyphenated`, a nowrap span; the text keeps its plain hyphen). The card shows the action `PreorderAction`
+  gives (pay buttons while open, the waitlist as the primary button while closed, else a
+  documentation link) and never a struck-through price or a places-left counter until the
+  standard price and the payment page's stock count exist. The guarantee lines come from
+  `PREORDER_GUARANTEES` in `src/content/preorder.ts`, which `/refund` renders too, and the FAQ,
+  the limits and the dated competitor prices from `src/content/pricing.ts`; its FAQPage JSON-LD
+  repeats the visible questions word for word. A status is an icon and a word, not a `Badge`
+  (the light theme's success badge is under 4.5:1).
+- A new public page is listed in four places: `PUBLIC_PAGES` in `src/content/site.ts` (the
+  sitemap, `llms.txt` and the metadata test read it), `PUBLIC_PATHS` in `src/lib/auth/gate.ts`
+  (else the login gate sends it to `/signin`), `PUBLIC_PATHS` in `src/lib/analytics/privacy.ts`
+  (else replay masks it and records it like an app page) and `PAGES` in
+  `scripts/lighthouse-dashboard.sh`. `src/content/public-pages.test.ts` fails until the gate and
+  the privacy rules list every `PUBLIC_PAGES` path.
 - The company and policy pages (`/about`, `/contact`, `/terms`, `/privacy`, `/refund`) use
   `LegalPage` (`src/components/marketing/LegalPage.tsx`): from 1024px a 240px sticky index (the
   hub's pages in two groups from `LEGAL_HUB`, then the page's sections), a 48px gap and a 720px
