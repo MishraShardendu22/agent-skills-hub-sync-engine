@@ -20,7 +20,10 @@ the `anti-slop` skill, checked by `scripts/check-anti-slop.sh` (or `make anti-sl
 
 - Colour, radius, spacing, shadow and font stacks come from the tokens: `var(--accent)`,
   `var(--bg-100)`, `var(--radius-md)`, `var(--space-4)`. A hex, `rgb()` or px radius in a
-  component or stylesheet is a defect unless it is in `tokens.json` itself.
+  component or stylesheet is a defect unless it is in `tokens.json` itself. One exception:
+  `src/app/styles/marketing.css` defines the public pages' type scale, widths, grid, tap target
+  and anchor offset in px until observatory-tokens has them (the list to upstream is in
+  `docs/DESIGN_SYSTEM_RELEASES.md`); it still adds no colour or radius.
 - Grounds step up by lightness: `--bg-000` page, `--bg-100` cards and sidebar, `--bg-200` fills
   inside a card, `--bg-300` popovers. Never skip a step.
 - Text is `--ink`, `--ink-secondary` or `--ink-muted`; every pair meets 4.5:1 on the grounds the
@@ -54,7 +57,8 @@ the `anti-slop` skill, checked by `scripts/check-anti-slop.sh` (or `make anti-sl
 - Class names in `styles.css` (`.btn`, `.card`, `.stat-card`, `.badge-success`, `.tree-node.active`,
   `.table`, `.input`) exist so older markup keeps working; new markup uses the components.
 - Dashboard-only styles (app shell, sidebar chrome, landing page, chat UI) live in
-  `src/app/styles/app.css`, `ai.css` and `search.css`. Anything two apps would want goes into the
+  `src/app/styles/app.css`, `ai.css` and `search.css`; the public pages' design layer and the
+  legal hub live in `marketing.css`. Anything two apps would want goes into the
   design system instead.
 
 ## 3. Rule: Theme follows the device, with no toggle
@@ -112,6 +116,33 @@ any `hover:-translate-y-` utility.
   site (`DOCS_URL`); never to the private repository (its URLs answer 404 to visitors) or into the
   app. It never claims what the product does not do (the source is proprietary-licensed, not
   "open source"; the product does not run on Vercel, Render or Neon).
+
+- The public pages share one design layer, `src/app/styles/marketing.css`, scoped to `.landing`
+  (the marketing layout's wrapper) so the app is untouched. Type comes from its scale, set with
+  the `.type-*` classes or `font: <weight> var(--type-*) var(--font-*)`: `display-1` (home h1,
+  64/66 on desktop, 42/44 on phones), `display-2` (inner-page h1), `heading` (h2), `price`,
+  `title` (h3 and card titles), `lead`, `body` (16/26), `small` (14/22, the floor for readable
+  text), `code` and `caption` (mono only). The serif is for h1 and h2 at 28px and up, with
+  `font-synthesis: none`; h3 and smaller are Inter 600 on the `title` step unless a block sets a
+  smaller step. Widths and gaps are its variables: a
+  1200px container (`.landing__inner`), 12 columns of 74px with 24px gutters (`.layout-grid`,
+  8 on tablets and 4 on phones; a child sets `--span`), a 680px prose measure, 44px touch targets
+  on phones. Breakpoints are 640px and 1024px. It adds no colour: the tokens of §1 only.
+- The company and policy pages (`/about`, `/contact`, `/terms`, `/privacy`, `/refund`) use
+  `LegalPage` (`src/components/marketing/LegalPage.tsx`): from 1024px a 240px sticky index (the
+  hub's pages in two groups from `LEGAL_HUB`, then the page's sections), a 48px gap and a 720px
+  article, on the container's left edge like the nav and the footer; below 1024px the index is a
+  `<details>` above the article, sections first, and both keep the 720px measure. Each section is a
+  `LegalSection`, whose h2 gets an id from its title without the number, so a renumbering keeps
+  old links. A policy opens with a three-to-five-line summary that only repeats its text, and
+  ends with its date and links to the other policies. The legal h2 is the `title` step in
+  Inter 600, not the serif. `/delivery` is the `#delivery` section of `/refund` (307 in
+  `next.config.ts`, temporary until Razorpay accepts the anchor), and the footer names it "Refunds and delivery". A page with subsections
+  keeps one name per thing across them (`/refund`: h2 Refunds and cancellation and h2 Delivery,
+  each with the h3s Founding pre-orders and Annual plans after launch). The footer is rendered
+  once, by the marketing layout after `<main>`, and sits at the bottom of a short page; it has
+  two link groups (Product; Company and legal, ending with Analytics settings), side by side on
+  phones with 44px-tall links.
 
 ## 7. Automated verification
 
