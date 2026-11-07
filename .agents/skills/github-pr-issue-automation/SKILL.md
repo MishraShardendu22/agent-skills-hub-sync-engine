@@ -92,7 +92,7 @@ Issues are created through standardized YAML issue forms in `.github/ISSUE_TEMPL
 | File | Purpose | Trigger |
 | :--- | :--- | :--- |
 | `pr-branch-cleanup.yml` | Auto-deletes remote feature branch when a PR is closed (merged or abandoned). Prevents stale branch buildup. | `pull_request: [closed]` |
-| `pr-review.yml` | Claude reviews every non-draft PR from the repository (inline comments and one summary it rewrites on each push) and, on an `@claude` comment from the owner, answers or pushes fixes. Skips with a notice without `CLAUDE_CODE_OAUTH_TOKEN`. | `pull_request: [opened, synchronize, ready_for_review, reopened]`, owner comments |
+| `pr-review.yml` | Claude reviews every non-draft PR from the repository (inline comments and one summary it rewrites on each push) and, on an `@claude` comment from the owner, answers or pushes fixes. On a failed CI push run of an owner's pull request, re-runs jobs the runner lost or commits Claude's fix (at most 3 in a row; label `no-autofix` turns it off; the fix job waits for an isolated runner labelled `autofix-sandbox` and the variable `CI_AUTOFIX_AGENT=isolated`). Skips with a notice without `CLAUDE_CODE_OAUTH_TOKEN`. | `pull_request: [opened, synchronize, ready_for_review, reopened]`, owner comments, `workflow_run` of CI |
 | `ci.yml` | Runs the path-filtered test and build pipeline (gofmt, `go mod tidy`, `go test -race`, `go build`, image smoke tests) plus one aggregate status job as the enforced quality gate. | `push` (any branch), `pull_request` (→ `main`, forks only) |
 
 ### Verification Command
