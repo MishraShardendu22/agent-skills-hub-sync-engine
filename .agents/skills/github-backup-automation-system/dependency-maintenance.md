@@ -62,7 +62,7 @@ The check is weekly and belongs to **Monday**. It is done by the **first agent r
 | **Patch or minor** of a direct dependency, tests and builds green | Update. |
 | **Major** of a direct dependency, or any update whose changelog lists breaking changes that touch our code (SDK signatures, config keys, runtime requirements) | Read the changelog. If the code changes are clear and bounded, make them in the same change, with tests, and update. If not, `defer` for 14 days: upstream often publishes a fix or a migration note in that time, and the team may already know the error. When the revisit date arrives, do the migration, including the code or SDK changes it needs; do not defer the same update twice without a new reason recorded. |
 | Docker base images, compose images, GitHub Actions | Update the pin by hand (new tag; for Actions the new commit SHA and its `# vX.Y.Z` comment); merge when CI is green (for `deploy/selfhost` and `deploy/shared`, also their `check.sh`) and `make deps-scan-record` afterwards. |
-| `@mishrashardendu22/observatory-tokens` and `observatory-ui` | Never by hand: the `design-system-update.yml` pull request does it (`docs/DESIGN_SYSTEM_RELEASES.md`). |
+| `@mishrashardendu22/observatory-tokens` and `observatory-ui` | A new observatory-ui release copied into `src/apps/github-backup-dashboard/vendor/` (`docs/DESIGN_SYSTEM_RELEASES.md`). |
 
 Safe means: the affected suites pass (`go test ./...` with `TEST_DATABASE_URL`, `pytest`, `pyright`, Vitest, `tsc`, Biome, the Next.js build), the Security Audit checks pass, and no behaviour the documentation promises changed.
 
