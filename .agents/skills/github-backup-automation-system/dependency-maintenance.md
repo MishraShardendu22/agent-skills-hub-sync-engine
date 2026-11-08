@@ -26,7 +26,7 @@ New advisories arrive for unchanged code (the Security Audit workflow goes red o
 | Field | Meaning |
 | :--- | :--- |
 | `last_check`, `last_check_note` | When the weekly check last ran and what it did. |
-| `ecosystems.<key>.dependencies` | Every **direct** dependency with its resolved version and the date it last changed. Keys: `go` (`go.mod`), `pnpm:src/apps/github-backup-dashboard`, `pnpm:src/apps/github-backup-design`, `pnpm:src/apps/github-backup-docs`, `uv:src/services/github-backup-observatory`, `docker` (base images of every Dockerfile, with `ARG` defaults filled in), `compose` (third-party images the compose files pin, as `tag@sha256:<12 hex>`), `github-actions` (`uses:` pins). pnpm ecosystems also record `pnpm.overrides`. |
+| `ecosystems.<key>.dependencies` | Every **direct** dependency with its resolved version and the date it last changed. Keys: `go` (`go.mod`), `pnpm:src/apps/github-backup-dashboard`, `pnpm:tests/e2e`, `uv:src/services/github-backup-observatory`, `docker` (base images of every Dockerfile, with `ARG` defaults filled in), `compose` (third-party images the compose files pin, as `tag@sha256:<12 hex>`), `github-actions` (`uses:` pins). pnpm ecosystems also record `pnpm.overrides`. |
 | `deferred` | Updates that must wait: dependency, versions, the reason, `deferred_on` and `revisit_on`. |
 | `history` | Every applied update, newest last. |
 
@@ -47,9 +47,9 @@ The check is weekly and belongs to **Monday**. It is done by the **first agent r
 
 1. **Scan**: `make deps-scan` (`deps-ledger.py scan`) shows direct dependencies that changed since the ledger was written and new or removed ones, and `pnpm.overrides` entries that were added, removed or changed (key or value).
 2. **Outdated**: `make deps-outdated` lists newer versions of direct dependencies (Go: `go list -m -u`; pnpm apps: `pnpm outdated`; Observatory: `uv pip list --outdated` in its `.venv`). Docker base images and GitHub Actions are listed with their pins only; check their upstream releases and update the pins by hand.
-3. **Audit**: `make deps-audit` runs what the Security Audit workflow runs: `pnpm audit --audit-level high` per app (the docs site's job is advisory, like `blocking: false` in the workflow), `pip-audit` on the Observatory lock with the workflow's `--ignore-vuln` list, `govulncheck ./...`, and Trivy when it is installed.
+3. **Audit**: `make deps-audit` runs what the Security Audit workflow runs: `pnpm audit --audit-level high` per app, `pip-audit` on the Observatory lock with the workflow's `--ignore-vuln` list, `govulncheck ./...`, and Trivy when it is installed.
 4. **Decide**, for every newer version and every advisory, with the rules in section 5.
-5. **Apply** the updates (section 6), run the affected test suites (`make test-go`, `make test-py`, `make test-dashboard`, the design and docs site builds), and record each one: `scripts/deps-ledger.py record --ecosystem <key> --name <pkg> --from <old> --to <new> --note "<why>"`; add `--transitive` for a package forced through `pnpm.overrides`.
+5. **Apply** the updates (section 6), run the affected test suites (`make test-go`, `make test-py`, `make test-dashboard`), and record each one: `scripts/deps-ledger.py record --ecosystem <key> --name <pkg> --from <old> --to <new> --note "<why>"`; add `--transitive` for a package forced through `pnpm.overrides`.
 6. **Defer** what cannot be done safely now (section 5): `scripts/deps-ledger.py defer --ecosystem <key> --name <pkg> --from <old> --to <new> --reason "<what breaks>"` (revisit in 14 days by default, `--days` to change).
 7. **Close** the check: `make deps-scan-record` (writes the scanned state into the ledger) and `scripts/deps-ledger.py checked --note "<one line>"`. Commit as `chore(deps): <what changed>` with the ledger, the manifests and the lockfiles in the same commit, and put `make deps-report` into the pull request body.
 
@@ -57,24 +57,22 @@ The check is weekly and belongs to **Monday**. It is done by the **first agent r
 
 | Situation | Decision |
 | :--- | :--- |
-| A **security advisory** at `high` or `critical` on a blocking audit (dashboard, design, Observatory, Go) | Update now, on any day. When the vulnerable package is transitive and its dependents still pin the vulnerable range, force it with `pnpm.overrides` (`">=<fixed version>"`) and verify with the app's build and tests. |
-| An advisory **without a fixed release** | `defer` it with the reason "no fixed release" and the upstream it depends on; revisit in 14 days. The docs site's audit is advisory, so it never blocks. |
+| A **security advisory** at `high` or `critical` on an audit (dashboard, Observatory, Go) | Update now, on any day. When the vulnerable package is transitive and its dependents still pin the vulnerable range, force it with `pnpm.overrides` (`">=<fixed version>"`) and verify with the app's build and tests. |
+| An advisory **without a fixed release** | `defer` it with the reason "no fixed release" and the upstream it depends on; revisit in 14 days. |
 | **Patch or minor** of a direct dependency, tests and builds green | Update. |
 | **Major** of a direct dependency, or any update whose changelog lists breaking changes that touch our code (SDK signatures, config keys, runtime requirements) | Read the changelog. If the code changes are clear and bounded, make them in the same change, with tests, and update. If not, `defer` for 14 days: upstream often publishes a fix or a migration note in that time, and the team may already know the error. When the revisit date arrives, do the migration, including the code or SDK changes it needs; do not defer the same update twice without a new reason recorded. |
 | Docker base images, compose images, GitHub Actions | Update the pin by hand (new tag; for Actions the new commit SHA and its `# vX.Y.Z` comment); merge when CI is green (for `deploy/selfhost` and `deploy/shared`, also their `check.sh`) and `make deps-scan-record` afterwards. |
 | `@mishrashardendu22/observatory-tokens` and `observatory-ui` | Never by hand: the `design-system-update.yml` pull request does it (`docs/DESIGN_SYSTEM_RELEASES.md`). |
 
-Safe means: the affected suites pass (`go test ./...` with `TEST_DATABASE_URL`, `pytest`, `pyright`, Vitest, `tsc`, Biome, the Next.js and Docusaurus builds), the Security Audit checks pass, and no behaviour the documentation promises changed.
+Safe means: the affected suites pass (`go test ./...` with `TEST_DATABASE_URL`, `pytest`, `pyright`, Vitest, `tsc`, Biome, the Next.js build), the Security Audit checks pass, and no behaviour the documentation promises changed.
 
 ## 6. Applying an update per ecosystem
 
 - **Go**: `go get <module>@<version> && go mod tidy` at the repository root (one module for the API, the MCP server and the worker). `go.mod`'s `go`/`toolchain` lines and the Dockerfiles' `golang` tag move together.
 - **pnpm apps** (`src/apps/*`): prefer `pnpm update <pkg>` when the lockfile diff touches only that package. When the dependents pin a vulnerable range, or a plain update drags unrelated packages along, add `"pnpm": {"overrides": {"<pkg>": ">=<version>"}}` to `package.json` and run `pnpm install --lockfile-only`. Then `scripts/check-lockfile-integrity.sh --fix <lockfile>` (regenerating a lockfile drops the integrity hashes of the design-system tarball entries) and `pnpm install --frozen-lockfile`. Never commit an npm or yarn lockfile.
-- **pnpm itself**: `corepack use pnpm@<version>` in each of `src/apps/*` and `tests/e2e` (it writes `packageManager` as `pnpm@<version>+sha512.<hex>` after checking npm's signature), then `node scripts/verify-pnpm-signature.mjs`; CI installs only the bytes with that sha512 (`.github/actions/setup-pnpm`), and the Security Audit checks the signature again on every `package.json` change and weekly.
+- **pnpm itself**: `corepack use pnpm@<version>` in `src/apps/github-backup-dashboard` and `tests/e2e` (it writes `packageManager` as `pnpm@<version>+sha512.<hex>` after checking npm's signature), then `node scripts/verify-pnpm-signature.mjs`; CI installs only the bytes with that sha512 (`.github/actions/setup-pnpm`), and the Security Audit checks the signature again on every `package.json` change and weekly.
 - **Observatory** (`uv`): `uv lock --upgrade-package <pkg>` (or edit the bound in `pyproject.toml` and `uv lock`), then `uv sync`, `uv run pytest`, `uv run --with pyright pyright`.
 - **Docker, GitHub Actions**: edit the `FROM` tag or the `uses:` SHA and `# vX.Y.Z` comment (`gh api repos/<owner>/<action>/commits/<tag> --jq .sha`); see section 5.
-
-Before committing, delete local build output that is not ignored by `go vet` (`src/apps/github-backup-docs/build`, which carries copies of linked `.go` files).
 
 ## 7. Dependabot
 

@@ -107,8 +107,7 @@ any `hover:-translate-y-` utility.
    beside headings. Icons are functional (Lucide at 16px in controls, 18px in navigation, 20px in
    icon tiles) and mark a state, a destination or an action. The product mark is `ObservatoryMark`
    from the library (one ink, `currentColor`); the GitHub mark is only for links to GitHub.
-   Illustrations are the brand's orbit scenes, kept to the docs and design sites' home pages and the
-   social card; never behind data. The dashboard's public pages show the product instead (a recorded
+   Illustrations are the brand's orbit scenes, kept to the social card; never behind data. The dashboard's public pages show the product instead (a recorded
    run, real bundles, real commands).
 3. **No fake status lights or filler metrics**: numbers on a page are real numbers from the API,
    or the page shows nothing there.
@@ -160,12 +159,11 @@ any `hover:-translate-y-` utility.
   a repository's line in the run card shows its time and name (the repeated message is read out
   but not shown). `home.spec.ts` holds the page at its measured length (live build 2998px at
   1440px, 5352px at 375px; the brief's 375px target of 4200px is not met). The site bar holds
-  How it works, Pricing and Docs from 960px; below, a labelled Menu button (`MobileMenu.tsx`:
+  How it works and Pricing from 960px; below, a labelled Menu button (`MobileMenu.tsx`:
   `aria-expanded`; Escape, a click outside, a click on one of its links or focus leaving it
   closes it) opens them in a sheet, and below 640px the outline button moves there too. The
   marketing pages are static (no `cookies()`/`headers()`, `revalidate` on the marketing
-  layout). Calls to action go to the pre-order section, `/pricing` or the docs site
-  (`DOCS_URL`); never to the private repository (its URLs answer 404 to visitors) or into the
+  layout). Calls to action go to the pre-order section or `/pricing`; never to the private repository (its URLs answer 404 to visitors) or into the
   app. It never claims what the product does not do (the source is proprietary-licensed, not
   "open source"; the server runs on one self-hosted machine, not on a cloud platform).
 
