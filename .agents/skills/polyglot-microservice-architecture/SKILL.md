@@ -28,7 +28,7 @@ This skill defines the architectural blueprint, service boundaries, inter-servic
 ```text
 ┌─────────────────────────────────────────────────────────────┐
 │                     Next.js Frontend                        │
-│             (Deployed on Vercel / Cloudflare Edge)          │
+│         (Docker Compose behind Caddy, one machine)          │
 └───────────────┬─────────────────────────────┬───────────────┘
                 │ REST / SSE                  │ REST / WebSocket
                 ▼                             ▼

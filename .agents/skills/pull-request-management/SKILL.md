@@ -93,7 +93,6 @@ When requested by the user to create a PR:
    ### Security & Documentation
    * [x] Verified zero credentials/secrets committed
    * [x] Relevant agent skills (`.agents/skills/`) and docs updated
-   * [x] Release notes added to `CHANGELOG.md`
    EOF
    )"
    ```

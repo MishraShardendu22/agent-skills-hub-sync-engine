@@ -18,7 +18,7 @@ Every service—regardless of language or framework—must be fully containerize
 ### Portability Roadmap
 1. **Phase 1 (Edge/PaaS)**: Edge/serverless frontends, containerized backends, managed/serverless PostgreSQL, container registry.
 2. **Phase 2 (Cloud Native)**: Cloud Infrastructure as Code (Terraform, ECS Fargate / EKS, Load Balancers, CloudFront, Container Registry).
-3. **Phase 3 (Sovereign Infrastructure)**: Self-Hosted Bare Metal / VPS (Docker Compose / Nomad / K3s, reverse proxy, automated backup sync).
+3. **Phase 3 (Sovereign Infrastructure)**: Self-Hosted Bare Metal / VPS (Docker Compose, reverse proxy, automated backup sync).
 
 ---
 

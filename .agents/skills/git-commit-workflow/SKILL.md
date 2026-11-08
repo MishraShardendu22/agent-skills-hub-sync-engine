@@ -137,10 +137,10 @@ All commits in repositories adhering to this standard MUST be classified under o
 ---
 
 ### Category 8: Documentation & Architectural Blueprints (`docs`)
-- **Purpose**: Updating repository guides, architecture documents, system diagrams, Agent skills (`.agents/skills/`), CHANGELOG notes, and developer setup instructions.
+- **Purpose**: Updating repository guides, architecture documents, system diagrams, Agent skills (`.agents/skills/`), and developer setup instructions.
 - **Format**: `docs(<scope>): <short imperative description>`
 - **Criteria**: Changes strictly confined to Markdown files, diagrams, or inline documentation.
-- **Allowed Scopes**: `architecture`, `skills`, `deployment`, `readme`, `changelog`
+- **Allowed Scopes**: `architecture`, `skills`, `deployment`, `readme`
 - **Examples**:
   - `docs(skills): document commit design taxonomy and CLI tooling guide`
   - `docs(deployment): document automated CI/CD pipeline and branching runbooks`

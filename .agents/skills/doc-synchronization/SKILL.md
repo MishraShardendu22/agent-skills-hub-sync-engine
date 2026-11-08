@@ -3,12 +3,12 @@ name: doc-synchronization
 scope: generic
 description: >-
   High-priority rules and automated procedures for continuously keeping repository documentation, API references,
-  architecture guides, changelogs, and agent skills synchronized with code changes autonomously without requiring human reminders.
+  architecture guides, and agent skills synchronized with code changes autonomously without requiring human reminders.
 ---
 
 # Autonomous Documentation & Skill Synchronization Engine
 
-This skill establishes the **Zero-Reminder Automatic Synchronization Rule**: whenever ANY code, API, database schema, workflow, or architecture change is introduced or modified in the repository, all corresponding architectural documents, API references, READMEs, changelogs, and AI agent skills (`.agents/skills/`) MUST be automatically inspected, updated, and expanded by the agent **without requiring any prompting or reminders from the human user**.
+This skill establishes the **Zero-Reminder Automatic Synchronization Rule**: whenever ANY code, API, database schema, workflow, or architecture change is introduced or modified in the repository, all corresponding architectural documents, API references, READMEs and AI agent skills (`.agents/skills/`) MUST be automatically inspected, updated, and expanded by the agent **without requiring any prompting or reminders from the human user**.
 
 ---
 
@@ -16,7 +16,7 @@ This skill establishes the **Zero-Reminder Automatic Synchronization Rule**: whe
 
 > [!IMPORTANT]
 > **AUTONOMOUS DOCUMENTATION & SKILL UPDATES (No Human Prompting Needed)**:
-> - AI agents are strictly required to treat **Agent Skills (`.agents/skills/`)** and **Documentation (`docs/`, `README.md`, `CHANGELOG.md`)** as first-class codebase artifacts.
+> - AI agents are strictly required to treat **Agent Skills (`.agents/skills/`)** and **Documentation (`docs/`, `README.md`)** as first-class codebase artifacts.
 > - Every feature addition (`feat`), improvement (`perf`/`refactor`), bug fix (`fix`), database migration (`db`), or DevOps pipeline (`ci`) MUST automatically trigger a synchronization pass across relevant skills and markdown specifications before finalizing commits.
 > - The human developer should **NEVER** have to ask: *"please update the docs"* or *"please update the agent skills"*. This is a mandatory, automated built-in reflex.
 
@@ -28,15 +28,15 @@ Whenever modifying files in any subsystem, the agent MUST automatically update t
 
 | Subsystem Modified | Typical Source Locations | Target Documentation & Skill Updates |
 | :--- | :--- | :--- |
-| **Git Workflow & Branching** | `.githooks/`, `scripts/git-*.sh`, `.github/workflows/` | `.agents/skills/git-commit-workflow/SKILL.md`<br>`.agents/skills/git-branch-management/SKILL.md`<br>`.agents/skills/git-post-merge-cleanup/SKILL.md`<br>the contributing or Git workflow guide, where the repository has one<br>`CHANGELOG.md` |
-| **Database & Migrations** | migration folders, database access code | `.agents/skills/repository-maintenance/SKILL.md`<br>`.agents/skills/polyglot-microservice-architecture/SKILL.md`<br>the data-ownership or schema document (and a generated schema inventory, if any)<br>`README.md`<br>`CHANGELOG.md` |
-| **AI Agents & RAG** | agent, tool and retrieval code | `.agents/skills/agent-observatory-workflow/SKILL.md`<br>the AI service's README or architecture section<br>`CHANGELOG.md` |
-| **SaaS Connectors & Cloud Storage** | connectors, storage sinks, integrations | `.agents/skills/saas-and-mcp-architecture/SKILL.md`<br>the architecture document that describes storage<br>`CHANGELOG.md` |
-| **Model Context Protocol (MCP)** | the MCP server, its tools and handlers | `.agents/skills/saas-and-mcp-architecture/SKILL.md`<br>the MCP server's design document<br>`CHANGELOG.md` |
-| **Backend & REST/WebSocket APIs** | handlers, routes, middleware | the API reference<br>the architecture document's runtime flows<br>the service's README<br>`CHANGELOG.md` |
-| **Workers & Background Daemons** | worker commands and services | the worker's README and its contract document<br>`CHANGELOG.md` |
-| **Frontend & UI Components** | web app pages and components | `README.md`<br>the web app's README<br>`CHANGELOG.md` |
-| **CI/CD & Containerization** | `.github/workflows/`, `*Dockerfile`, compose files, platform configuration | `.agents/skills/ci-cd-workflow/SKILL.md`<br>`.agents/skills/docker-first-architecture/SKILL.md`<br>the deployment and operations guides<br>`CHANGELOG.md` |
+| **Git Workflow & Branching** | `.githooks/`, `scripts/git-*.sh`, `.github/workflows/` | `.agents/skills/git-commit-workflow/SKILL.md`<br>`.agents/skills/git-branch-management/SKILL.md`<br>`.agents/skills/git-post-merge-cleanup/SKILL.md`<br>the contributing guide, where the repository has one |
+| **Database & Migrations** | migration folders, database access code | `.agents/skills/repository-maintenance/SKILL.md`<br>`.agents/skills/polyglot-microservice-architecture/SKILL.md`<br>the data-ownership or schema document (and a generated schema inventory, if any)<br>`README.md` |
+| **AI Agents & RAG** | agent, tool and retrieval code | `.agents/skills/agent-observatory-workflow/SKILL.md`<br>the AI service's README or architecture section |
+| **SaaS Connectors & Cloud Storage** | connectors, storage sinks, integrations | `.agents/skills/saas-and-mcp-architecture/SKILL.md`<br>the architecture document that describes storage |
+| **Model Context Protocol (MCP)** | the MCP server, its tools and handlers | `.agents/skills/saas-and-mcp-architecture/SKILL.md`<br>the MCP server's design document |
+| **Backend & REST/WebSocket APIs** | handlers, routes, middleware | the API reference<br>the architecture document's runtime flows<br>the service's README |
+| **Workers & Background Daemons** | worker commands and services | the worker's README and its contract document |
+| **Frontend & UI Components** | web app pages and components | `README.md`<br>the web app's README |
+| **CI/CD & Containerization** | `.github/workflows/`, `*Dockerfile`, compose files, platform configuration | `.agents/skills/ci-cd-workflow/SKILL.md`<br>`.agents/skills/docker-first-architecture/SKILL.md`<br>the deployment and operations guides |
 ---
 
 ## 3. Autonomous Skill Creation & Evolution Rule
@@ -52,7 +52,7 @@ Whenever modifying files in any subsystem, the agent MUST automatically update t
 
 ## 4. Pre-Commit Autonomous Synchronization Checklist
 
-Before executing `git commit` or finalizing any milestone, execute this 5-step checklist:
+Before executing `git commit` or finalizing any milestone, execute this 4-step checklist:
 
 1. **Inspect Staged/Modified Files**:
    ```bash
@@ -60,5 +60,4 @@ Before executing `git commit` or finalizing any milestone, execute this 5-step c
    ```
 2. **Cross-Reference Subsystem Matrix**: Identify all target docs and agent skills impacted by the modified files.
 3. **Apply Documentation & Skill Edits**: Update markdown files and skills with exact details.
-4. **Log in Changelog**: Add concise bullet points under `## [Unreleased]` in `CHANGELOG.md`.
-5. **Sync Skills Upstream**: If any skill inside `.agents/skills/` was added or modified, execute `skills-sync push` to propagate updates to the central skills catalog.
+4. **Sync Skills Upstream**: If any skill inside `.agents/skills/` was added or modified, execute `skills-sync push` to propagate updates to the central skills catalog.

@@ -37,7 +37,7 @@ The repository uses `src/apps/` for user-facing applications, `src/services/` fo
    - `cmd/github-backup-worker/`
    - `cmd/github-backup-mcp/`
 3. Built binaries use the same canonical executable names: `github-backup-api`, `github-backup-identity`, `github-backup-runs`, `github-backup-insights`, `github-backup-notify`, `github-backup-billing`, `github-backup-worker`, and `github-backup-mcp`.
-4. Docker Compose service keys, container names, Render service names, and CI build labels use the canonical product name.
+4. Docker Compose service keys, container names, and CI build labels use the canonical product name.
 5. Existing environment variable names remain unchanged unless a separate configuration migration explicitly requires a rename.
 6. Internal Go packages use responsibility names such as `transport`, `repository`, `application`, and `domain`; avoid catch-all packages named `util`, `common`, or `misc` for new code.
 7. Compatibility aliases may remain temporarily, but they must be labeled as legacy wrappers and must delegate to the canonical unit. New code must never introduce another alias.
@@ -64,7 +64,7 @@ The existing names remain valid only as migration aliases until the repository m
 
 When moving a unit to its canonical directory:
 
-1. Update Makefile targets, Dockerfiles, Compose, Render, CI, systemd documentation, and README references in the same change.
+1. Update Makefile targets, Dockerfiles, Compose, CI, systemd documentation, and README references in the same change.
 2. Preserve stable public commands such as `make backup`.
 3. Keep a legacy wrapper only when an external command or deployment depends on the old path.
 4. Run `go test ./...`, `go vet ./...`, `go build ./...`, and the relevant frontend or Python validation commands.

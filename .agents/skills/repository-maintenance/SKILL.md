@@ -40,15 +40,14 @@ This skill provides procedures for maintaining database integrity, executing dat
 
 ## 3. Backup & Disaster Recovery Runbook
 
-PostgreSQL database dumps should be automated with SHA-256 integrity verification:
+On the self-hosted machine the database is dumped by `ghb` (`deploy/selfhost/README.md#backups`): a nightly systemd timer, and a dump before every migration.
 
 ```bash
-# 1. Execute an automated database backup
-make backup-db
-
-# 2. Restore database from a backup file
-make restore-db BACKUP_FILE=backups/postgres/db_backup_YYYYMMDD_HHMMSS.sql.gz
+sudo ghb backup                 # dump now (to /var/backups/ghb, 14 kept)
+sudo ghb restore latest         # or: sudo ghb restore <file>
 ```
+
+Encrypted copies in S3-compatible storage (`BACKUP_S3_*`) are restored with `deploy/shared/db-backup/restore.sh` ([`deploy/shared/README.md`](../../../deploy/shared/README.md#restore-a-dump)).
 
 ---
 

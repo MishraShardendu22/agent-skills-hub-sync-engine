@@ -167,7 +167,7 @@ any `hover:-translate-y-` utility.
   layout). Calls to action go to the pre-order section, `/pricing` or the docs site
   (`DOCS_URL`); never to the private repository (its URLs answer 404 to visitors) or into the
   app. It never claims what the product does not do (the source is proprietary-licensed, not
-  "open source"; the product does not run on Vercel, Render or Neon).
+  "open source"; the server runs on one self-hosted machine, not on a cloud platform).
 
 - The public pages share one design layer, `src/app/styles/marketing.css`, scoped to `.landing`
   (the marketing layout's wrapper) so the app is untouched. Type comes from its scale, set with
