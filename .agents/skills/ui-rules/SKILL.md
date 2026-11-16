@@ -130,10 +130,8 @@ any `hover:-translate-y-` utility.
   and every line and number on it comes from `src/content/landing.ts`, where each figure was read
   from a real run (never estimated; change one only by running the thing again). Under the
   site bar it has five parts, each with one dense block, split by 1px rules:
-  1. The hero: the h1 (`display-1`), the lead, `HeroActions` (the one action this build offers
-     in place: the waitlist form when it works, the pay buttons when pre-orders open, else
-     "Pricing and FAQ" to `/pricing`; then the docs as a text link), the founding terms in one
-     `small` line, and `SampleRunCard`, titled "Sample run 29 · 20 September 2026": its totals
+  1. The hero: the h1 (`display-1`), the lead, `HeroActions` (a button to `/pricing`; then the
+     docs as a text link while `DOCS_URL` is set), and `SampleRunCard`, titled "Sample run 29 · 20 September 2026": its totals
      and its log lines word for word, server-rendered, nothing counting up, no window dots or
      prompt. That worker wrote tar.gz snapshots before bundles shipped, so the run is
      "archived", never "bundled", and its caption says so. The LCP element is hero text (the h1
@@ -146,10 +144,9 @@ any `hover:-translate-y-` utility.
      verified against a real bundle, with `CopyButton` (one command a line, never wrapped: a
      long line scrolls and the block takes focus), and what the worker needs, beside the failure
      table.
-  4. `#preorder`, the price band (`PreorderSection.tsx`, at most 200px tall on desktop: the
-     founding price, the three guarantee lines and a button to `/pricing`). It never repeats
-     the hero's waitlist form or pay buttons: a page shows each once, so a `preorder_clicked`
-     from `/` always comes from the hero.
+  4. `#price`, the price band (`PriceSection.tsx`, at most 200px tall on desktop: the monthly
+     and yearly prices from `src/content/plan.ts` and Start monthly / Start yearly, which go to
+     `/signin?next=/billing?period=...`; the empty `#preorder` keeps the old id for shared links).
   5. `#shipped`: dated product changes from merged pull requests, heading beside the list from
      1024px.
   Headings are two-tone (`.home-section__aside`): the claim in `--ink`, the rest in
@@ -164,7 +161,7 @@ any `hover:-translate-y-` utility.
   `aria-expanded`; Escape, a click outside, a click on one of its links or focus leaving it
   closes it) opens them in a sheet, and below 640px the outline button moves there too. The
   marketing pages render on each request (`dynamic = "force-dynamic"` on the marketing layout:
-  `APP_URL` and `DOCS_URL` are the serving machine's) and read no cookie or header. Calls to action go to the pre-order section, `/pricing` or the docs site
+  `APP_URL` and `DOCS_URL` are the serving machine's) and read no cookie or header. Calls to action go to `/pricing`, `/signin` and `/billing` (starting a plan) or the docs site
   (`DOCS_URL`); never to the private repository (its URLs answer 404 to visitors) or into the
   app. It never claims what the product does not do (the source is proprietary-licensed, not
   "open source"; the server runs on one self-hosted machine, not on a cloud platform).
@@ -180,8 +177,8 @@ any `hover:-translate-y-` utility.
   1200px container (`.landing__inner`), 12 columns of 74px with 24px gutters (`.layout-grid`,
   8 on tablets and 4 on phones; a child sets `--span`), a 680px prose measure, 44px touch targets
   on phones. Breakpoints are 640px and 1024px. It adds no colour: the tokens of §1 only.
-- `/pricing` (`src/app/(marketing)/pricing/page.tsx`) has one plan and no tiers, monthly toggle or
-  "most popular" badge. The header (`display-2` h1, the product model in one line, the currency
+- `/pricing` (`src/app/(marketing)/pricing/page.tsx`) has one plan, billed monthly or yearly, and no
+  tiers or "most popular" badge. The header (`display-2` h1, the product model in one line, the currency
   buttons) sits beside the plan card from 1024px (`--plan-card-max` 560px, the page 1080px), the
   card before the limits on phones. Both currencies are in the HTML: `CurrencySwap` puts them in one
   grid cell and marketing.css hides the one that `data-currency` on `<html>` does not name, with
@@ -190,16 +187,14 @@ any `hover:-translate-y-` utility.
   from the time zone and language, never a geo header, so a visitor outside India never sees the
   rupee price first; `CurrencyScope` (the one client island) keeps the buttons in step and changes
   the attribute on a click. `currency.test.ts` runs the script against `browserCurrency()`. "What
-  you get" is two lists side by side from 768px, Works today and Planned for launch, each under its
+  you get" is two lists side by side from 768px, Works today and Planned, each under its
   icon and word, not a table. The nav marks Pricing with `aria-current` there and its button leads
   to the docs (`current="/pricing"`). Table heads and the phone labels are the `small` step in
   sentence case, and hyphenated terms stay on one line (`KeepHyphenated`, a nowrap span; the text
-  keeps its plain hyphen). The card shows the action `PreorderAction` gives (pay buttons while open,
-  with the waitlist under them when it is on; the waitlist as the primary button while closed; else
-  a documentation link) and never a struck-through price or a places-left counter until the standard
-  price and the payment page's stock count exist. The guarantee lines come from
-  `PREORDER_GUARANTEES` in `src/content/preorder.ts`, which `/refund` renders too, and the FAQ, the
-  limits and the dated competitor prices from `src/content/pricing.ts`; its FAQPage JSON-LD repeats
+  keeps its plain hyphen). The card shows both periods' prices from `src/content/plan.ts` with Start
+  monthly and Start yearly (to `/signin?next=/billing?period=month|year`), and never a struck-through
+  price or a places-left counter. The FAQ, the limits and the dated competitor prices come from
+  `src/content/pricing.ts`; its FAQPage JSON-LD repeats
   the visible questions word for word. A status is an icon and a word, not a `Badge` (the light
   theme's success badge is under 4.5:1).
 - A new public page is listed in four places: `PUBLIC_PAGES` in `src/content/site.ts` (the
@@ -218,8 +213,8 @@ any `hover:-translate-y-` utility.
   its date and links to the other policies. The legal h2 is the `title` step in Inter 600, not the
   serif. `/delivery` is the `#delivery` section of `/refund` (307 in `next.config.ts`, temporary
   until Razorpay accepts the anchor), and the footer names it "Refunds and delivery". A page with
-  subsections keeps one name per thing across them (`/refund`: h2 Refunds and cancellation and h2
-  Delivery, each with the h3s Founding pre-orders and Annual plans after launch). The footer is
+  subsections keeps one name per thing across them (`/refund`: h2 Refunds and cancellation with the
+  h3s Cancelling, Refunds, If we end a plan and How to ask for a refund, and h2 Delivery). The footer is
   rendered once, by the marketing layout after `<main>`, and sits at the bottom of a short page; it
   has two link groups (Product; Company and legal, ending with Analytics settings), side by side on
   phones with 44px-tall links.
