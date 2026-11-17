@@ -55,7 +55,7 @@ Sensitive actions (tools in `CONFIRMATION_REQUIRED_TOOLS` in `agent/openrouter.p
 3. The stream waits with `wait_for_decision(confirm_id, timeout=HITL_CONFIRMATION_TIMEOUT_SECONDS, poll_interval=HITL_POLL_INTERVAL_SECONDS)`. A timeout or a disconnect marks the row `expired`, which counts as rejected; the tool then ends with `tool_end` and `success: false`.
 4. `POST /chat` and `POST /api/tools/execute` refuse these tools.
 
-Every event of one tool call carries the same `tool_call_id` (`ensure_tool_call_ids()` fills in a UUID when the model sent none). Keep the SSE shapes additive; the dashboard depends on them (`docs/STREAMING_ARCHITECTURE.md`).
+Every event of one tool call carries the same `tool_call_id` (`ensure_tool_call_ids()` fills in a UUID when the model sent none). Keep the SSE shapes additive; the dashboard depends on them (`docs/STREAMING_ARCHITECTURE.md`). `stream_chat_turn()` sends a `: ping` comment after 15 seconds without an event. It waits for the agent's next event with `asyncio.wait`, never `asyncio.wait_for`, which would cancel the tool call or the approval wait the agent is in (`src/services/github-backup-observatory/STREAMING.md`).
 
 ---
 
