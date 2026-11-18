@@ -26,7 +26,7 @@ New advisories arrive for unchanged code (the Security Audit workflow goes red o
 | Field | Meaning |
 | :--- | :--- |
 | `last_check`, `last_check_note` | When the weekly check last ran and what it did. |
-| `ecosystems.<key>.dependencies` | Every **direct** dependency with its resolved version and the date it last changed. Keys: `go` (`go.mod`), `pnpm:src/apps/github-backup-dashboard`, `pnpm:src/apps/github-backup-design`, `pnpm:src/apps/github-backup-docs`, `uv:src/services/github-backup-observatory`, `docker` (base images of every Dockerfile, with `ARG` defaults filled in), `compose` (third-party images the compose files pin, as `tag@sha256:<12 hex>`), `github-actions` (`uses:` pins). pnpm ecosystems also record `pnpm.overrides`. |
+| `ecosystems.<key>.dependencies` | Every **direct** dependency with its resolved version and the date it last changed. Keys: `go` (`go.mod`), `pnpm:src/apps/github-backup-dashboard`, `pnpm:src/apps/github-backup-design`, `pnpm:src/apps/github-backup-docs`, `uv:src/services/github-backup-observatory`, `docker` (base images of every Dockerfile, with `ARG` defaults filled in), `compose` (third-party images the compose files pin, as `tag@sha256:<12 hex>`), `ci-services` (the images `scripts/ci-services.sh` starts for the CI integration jobs, same form), `github-actions` (`uses:` pins). pnpm ecosystems also record `pnpm.overrides`. |
 | `deferred` | Updates that must wait: dependency, versions, the reason, `deferred_on` and `revisit_on`. |
 | `history` | Every applied update, newest last. |
 
@@ -46,7 +46,7 @@ The check is weekly and belongs to **Monday**. It is done by the **first agent r
 ## 4. The routine (`make deps-check` runs steps 1 to 3)
 
 1. **Scan**: `make deps-scan` (`deps-ledger.py scan`) shows direct dependencies that changed since the ledger was written and new or removed ones, and `pnpm.overrides` entries that were added, removed or changed (key or value).
-2. **Outdated**: `make deps-outdated` lists newer versions of direct dependencies (Go: `go list -m -u`; pnpm apps: `pnpm outdated`; Observatory: `uv pip list --outdated` in its `.venv`). Docker base images and GitHub Actions are listed with their pins only; check their upstream releases and update the pins by hand.
+2. **Outdated**: `make deps-outdated` lists newer versions of direct dependencies (Go: `go list -m -u`; pnpm apps: `pnpm outdated`; Observatory: `uv pip list --outdated` in its `.venv`). Docker base images, compose images, CI service images and GitHub Actions are listed with their pins only; check their upstream releases and update the pins by hand.
 3. **Audit**: `make deps-audit` runs what the Security Audit workflow runs: `pnpm audit --audit-level high` per app (the docs site's job is advisory, like `blocking: false` in the workflow), `pip-audit` on the Observatory lock with the workflow's `--ignore-vuln` list, `govulncheck ./...`, and Trivy when it is installed.
 4. **Decide**, for every newer version and every advisory, with the rules in section 5.
 5. **Apply** the updates (section 6), run the affected test suites (`make test-go`, `make test-py`, `make test-dashboard`, the design and docs site builds), and record each one: `scripts/deps-ledger.py record --ecosystem <key> --name <pkg> --from <old> --to <new> --note "<why>"`; add `--transitive` for a package forced through `pnpm.overrides`.

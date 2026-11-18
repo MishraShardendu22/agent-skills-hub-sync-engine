@@ -37,7 +37,7 @@ When extending file archiving and storage destinations:
       List(ctx context.Context, prefix string) ([]ObjectMetadata, error)
   }
   ```
-- Support pluggable backends: AWS S3, Cloudflare R2, MinIO, Google Drive, Azure Blob, and Local Filesystem.
+- Support pluggable backends: AWS S3, Cloudflare R2, Backblaze B2, Wasabi, self-hosted RustFS or Garage (and an existing MinIO server), Google Drive, Azure Blob, and Local Filesystem.
 - Streaming uploads should stream directly from memory or pipes without requiring massive local scratch disk space.
 
 ---
