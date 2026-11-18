@@ -34,6 +34,7 @@ The human runs these. Agents must not start browser logins, write the owner's ke
 - `githubapp/`: `manifest.json` (public, contents and metadata read, no webhook) and the manifest flow; `github-app.json` holds the app's client id and secret (the private key and webhook secret are dropped).
 - `openrouter/`: PKCE login; `internal/loopback` serves the local callback pages (Host-checked), `internal/browser` opens pages.
 - `internal/app/githubaccess.go`: how a run uses the logins: installation discovery (`discovery.Lister.Installations`) for GitHub App tokens with `GITHUB_DISCOVERY=auto`, the private-destination check tokens, and the destination login as a scoped `gitexec.BasicAuthHeader` for an `https://` `BACKUP_REPO_PATH`.
+- Two builds (ADR 0023): the owner build (`go build`; `make setup`, the worker image, releases) and the customer build (`go build -tags customer -ldflags "-X github.com/MishraShardendu22/github-backup/src/services/github-backup-worker/internal/app.ticketKeys=<RUN_TICKET_PUBLIC_KEYS>"`), which the docs image hands out with `scripts/install-worker.*`. `internal/app/build_customer.go` and `build_owner.go` set `const customerBuild`; `runpass.go` checks the run pass, including that its issuer is the address the machine is linked to (a machine linked by a LAN IP must link again with the address the server publishes). `controlPlaneOptions` sets `NoProxy` in the customer build, and `trust.go` removes `SSL_CERT_FILE`/`SSL_CERT_DIR` at the start of `run()` and after every env load (`loadEnv`, never `config.LoadEnv` directly), so a relay at the real address needs a trusted certificate for the server's name (a CA in the OS or user store) and a hosts or DNS entry: more effort than a proxy variable, not more than the customer's own rights. The customer build refuses `DATABASE_URL`/`POSTGRES_URL` (`run`, `verify`), refuses to run unlinked (dry runs too), has no `migrate`, prints `Runs: linked to ...` or `Runs: not linked (...)`, and its `version` ends in `(customer build)`. The installers' hourly launcher starts `run --scheduled` only when `auth status` matches `^Runs: linked`.
 
 ## 3. Invariants
 
@@ -41,12 +42,16 @@ The human runs these. Agents must not start browser logins, write the owner's ke
 2. No installation is an error, never an empty listing.
 3. Tokens never appear in argv, URLs, `.git/config`, logs or `auth status`.
 4. Scheduled units call `%h/.local/bin/github-backup-worker` in the worker directory. A coordinated machine (`DATABASE_URL` in the repository's root `.env`, or linked) whose worker has schedule slots (its `run --help` names "schedule slot") gets one hourly `run --scheduled` at a minute fixed per machine, which backs up at the account's slot and serves requested runs; otherwise the weekly `run --scheduled` plus the hourly `run --pending-only`, and a plain `run` with no hourly job when the built worker lacks those flags. Re-running setup moves a machine between the two (after linking, unlinking or adding a database: `make update`).
-5. `scripts/setup.sh` stays bash 3.2 portable (no associative arrays, `mapfile`, `${var,,}`, `sed -i`, `readlink -f`, `date -d`), prints every change under `--dry-run` and writes nothing.
+5. Customer-only behaviour is a plain `if customerBuild` branch in `internal/app`; the owner build stays unchanged (no `ticket_nonce`, every mode). The customer build checks the run pass after the run started and claimed its requests and before any GitHub or storage call, and fails the run through the normal recording path when it does not verify.
+6. `scripts/setup.sh` stays bash 3.2 portable (no associative arrays, `mapfile`, `${var,,}`, `sed -i`, `readlink -f`, `date -d`), prints every change under `--dry-run` and writes nothing.
 
 ## 4. Testing
 
 ```bash
 go test -race ./src/services/github-backup-worker/...   # keyring.MockInit, httptest fakes, fake HOME
+go vet -tags customer ./src/services/github-backup-worker/...
+go test -race -tags customer -run Customer ./src/services/github-backup-worker/...   # the customer build (customer_test.go)
+bash tests/install_worker_test.sh                        # the docs site's installers
 bash tests/setup_script_test.sh                          # also re-runs itself in the bash:3.2 image when present
 ```
 
