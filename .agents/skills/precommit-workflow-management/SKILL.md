@@ -26,7 +26,7 @@ This skill explains how to maintain, configure, and execute the intelligent pre-
 
 The hooks live in `.githooks/` and are tracked directly in version control. Commits must stay fast, so the work is split:
 
-- **`pre-commit`**: fast checks only (secret scan, formatting, lint, static analysis, unit tests of the changed areas).
+- **`pre-commit`**: fast checks only (secret scan, formatting, lint, static analysis, unit tests of the changed areas). A suite that takes 10 s or more goes into `HEAVY_SCRIPT_TESTS` in `.githooks/pre-commit`: it then runs once, in CI, instead of on commit, again on push and in CI; `PRECOMMIT_HEAVY=1` runs it locally.
 - **`pre-push`**: re-runs the pre-commit checks for the commits the push adds to the remote (not the layer below a stacked branch, not the `main` commits a branch merged in), then the slow builds (binaries, frontend production build, container images when container files change).
 
 ```text
