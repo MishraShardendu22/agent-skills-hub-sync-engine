@@ -43,7 +43,9 @@ This skill provides procedures for maintaining database integrity, executing dat
 On the self-hosted machine the database is dumped by `ghb` (`deploy/selfhost/README.md#backups`): a nightly systemd timer, and a dump before every migration.
 
 ```bash
-sudo ghb backup                 # dump now (to /var/backups/ghb, 14 kept)
+sudo ghb backup                 # dump + encrypted settings copy now (/var/backups/ghb; retention in the README)
+sudo ghb backup verify          # restore the newest dump into a scratch database and compare rows
+sudo ghb volumes init           # owner step: own volumes for the dumps and the image registry
 sudo ghb restore latest         # or: sudo ghb restore <file>
 ```
 
