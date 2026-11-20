@@ -102,7 +102,14 @@ class TestHealthAPI(unittest.IsolatedAsyncioTestCase):
 
 ---
 
-## 5. Test Execution Runbook
+## 5. Shell Test Standards (`pipefail`)
+
+- Never pipe into a reader that stops early: `cmd | grep -q X`, `grep -m`, `grep -l`, `head`, `sed 1q` or `awk '... exit'`. The reader exits at its first match, `cmd` gets SIGPIPE while it still writes, and under `set -o pipefail` the pipeline fails (or a negated check passes) depending on timing.
+- Let the reader read to the end instead: `cmd | grep X >/dev/null`, `cmd | sed -n 1p`, an awk program without `exit`, or capture the output first and test the variable.
+
+---
+
+## 6. Test Execution Runbook
 
 ```bash
 # 1. Run all test suites across the repository
