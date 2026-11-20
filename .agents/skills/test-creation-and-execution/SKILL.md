@@ -106,6 +106,7 @@ class TestHealthAPI(unittest.IsolatedAsyncioTestCase):
 
 - Never pipe into a reader that stops early: `cmd | grep -q X`, `grep -m`, `grep -l`, `head`, `sed 1q` or `awk '... exit'`. The reader exits at its first match, `cmd` gets SIGPIPE while it still writes, and under `set -o pipefail` the pipeline fails (or a negated check passes) depending on timing.
 - Let the reader read to the end instead: `cmd | grep X >/dev/null`, `cmd | sed -n 1p`, an awk program without `exit`, or capture the output first and test the variable.
+- The same holds outside the tests: `tests/test_pipefail_readers.py` scans every file under `tests/`, `scripts/` and `deploy/` that sets `pipefail`, plus the files those scripts source (`scripts/lib/`, `deploy/selfhost/lib.sh`). For the first N lines, use `awk -v n="${N}" 'NR <= n'`, not `head -n N`: it reads to the end and, like `head`, prints nothing when N is 0 (`sed -n "1,0p"` still prints line 1).
 
 ---
 
