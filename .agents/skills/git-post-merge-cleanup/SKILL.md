@@ -116,11 +116,11 @@ git status
 > [!IMPORTANT]
 > **MANDATORY IN EVERY REPOSITORY**: Every project repository MUST have `.github/workflows/pr-branch-cleanup.yml` deployed. This workflow is the automated counterpart to the manual local cleanup runbook above. Without it, merged feature branches accumulate on GitHub and pollute the remote branch list.
 
-Remote feature branch deletion is automated via a GitHub Actions workflow that triggers on every PR close event (both merged and closed-without-merge). The canonical workflow is:
+Remote feature branch deletion is automated via a GitHub Actions workflow that triggers when a PR is closed and acts only when it was merged. A branch whose PR was closed without merging keeps its work, and deleting it would close the open PRs stacked on it (GitHub retargets those only after a merge). The canonical workflow is:
 
 ```yaml
 # .github/workflows/pr-branch-cleanup.yml
-name: "PR Closed — Remote Branch Cleanup"
+name: "PR Merged Remote Branch Cleanup"
 
 on:
   pull_request:
@@ -130,42 +130,76 @@ permissions:
   contents: read
 
 jobs:
-  cleanup-closed-branch:
-    name: "Delete Closed Remote Branch"
+  cleanup-merged-branch:
+    name: "Delete Merged Remote Branch"
     if: >
+      github.event.pull_request.merged == true &&
       github.event.pull_request.head.repo.full_name == github.repository &&
       github.event.pull_request.head.ref != 'main' &&
       github.event.pull_request.head.ref != 'master'
     runs-on: ubuntu-24.04
     permissions:
       contents: write
+      pull-requests: read
     steps:
       - name: "Delete Remote Feature Branch"
         uses: actions/github-script@<full-commit-sha> # vX.Y.Z (current major, pinned by SHA)
         with:
           script: |
-            const headRef = context.payload.pull_request.head.ref;
+            const pr = context.payload.pull_request;
+            const { owner, repo } = context.repo;
+            const headRef = pr.head.ref;
+            const keep = (why) => core.info(`Keeping branch ${headRef}: ${why}.`);
+
+            // The job's if says the same; the script must hold on its own.
+            if (pr.merged !== true) return keep('the pull request was closed without merging');
+            if (pr.head.repo?.full_name !== `${owner}/${repo}`) return keep('it is not in this repository');
+            const defaultBranch = context.payload.repository?.default_branch;
+            if (headRef === defaultBranch || ['main', 'master'].includes(headRef) || /^Frozen-/i.test(headRef)) {
+              return keep('it is a long-lived branch');
+            }
+
+            let branch;
             try {
-              await github.rest.git.deleteRef({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                ref: `heads/${headRef}`
-              });
-              core.info(`[SUCCESS] Deleted remote branch: ${headRef}`);
+              ({ data: branch } = await github.rest.repos.getBranch({ owner, repo, branch: headRef }));
+            } catch (error) {
+              if (error.status === 404) return core.info(`Branch ${headRef} is already gone.`);
+              throw error;
+            }
+            if (branch.protected) return keep('it is protected');
+            let rules = [];
+            try {
+              rules = await github.paginate(github.rest.repos.getBranchRules, { owner, repo, branch: headRef, per_page: 100 });
+            } catch (error) {
+              // Rulesets need GitHub Pro in a private repository, so none applies.
+              // Any other refusal leaves the rules unknown and the branch kept.
+              if (error.status !== 403 || !/upgrade to github pro/i.test(error.message)) throw error;
+            }
+            if (rules.some((rule) => rule.type === 'deletion')) return keep('a ruleset restricts its deletion');
+            if (branch.commit.sha !== pr.head.sha) return keep(`it moved to ${branch.commit.sha} after the merge of ${pr.head.sha}`);
+            const open = await github.paginate(github.rest.pulls.list, { owner, repo, state: 'open', head: `${owner}:${headRef}`, per_page: 100 });
+            if (open.length > 0) return keep(`open pull request #${open[0].number} comes from it`);
+
+            try {
+              await github.rest.git.deleteRef({ owner, repo, ref: `heads/${headRef}` });
+              core.info(`Deleted branch ${headRef}.`);
             } catch (error) {
               if (error.status === 422 || error.status === 404) {
-                core.info(`[INFO] Remote branch '${headRef}' was already deleted; skipping.`);
+                core.info(`Branch ${headRef} was already deleted.`);
               } else {
-                core.setFailed(`[ERROR] Failed to delete remote branch '${headRef}': ${error.message}`);
+                core.setFailed(`Failed to delete branch ${headRef}: ${error.message}`);
               }
             }
 ```
 
 **Safety guarantees baked into the workflow:**
+- Deletes only the head branch of a **merged** PR; a PR closed without merging keeps its branch.
 - Only runs on branches from the same repo (not forks).
-- Never deletes `main` or `master`.
+- Never deletes the default branch, `main`, `master` or a `Frozen-*` branch (add the repository's own long-lived patterns to that check).
+- Keeps a branch that branch protection or a ruleset keeps from deletion, a branch that gained commits after the merge, and a branch another open PR comes from.
 - Silently skips if the branch was already deleted.
-- Does NOT require the PR to be merged — also cleans up abandoned/closed PRs.
+- GitHub's own "Automatically delete head branches" setting (on in this repository) deletes a merged PR's head branch whatever the workflow keeps, unless protection or a ruleset stops it; a private repository without GitHub Pro has neither, so never merge a PR whose head is a long-lived branch such as `Frozen-*`.
+- In this repository `tests/pr_branch_cleanup_test.mjs` runs the script against each of these cases.
 
 **Relationship to local cleanup (Sections 2–3 above):**
 - This workflow handles the **remote** branch only.
