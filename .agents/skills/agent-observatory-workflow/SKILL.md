@@ -41,6 +41,8 @@ This skill guides agents and engineers on how to build, extend, test, and enhanc
    ```
 2. Export the tool in the tools package `__init__.py`.
 3. Register the tool in your central agent runner's `TOOLS` list.
+4. Log only the tool's name, duration and error type (`type(exc).__name__`, or `utils.error_log.error_summary` for a provider error; it decides with `from_provider`, not with `openrouter_status`, which also matches our own errors that carry a `status_code`). Questions, tool arguments, tool error text and a provider's error text are the user's content and never go to the log, at any level (`tests/test_log_privacy.py`).
+5. A new route any signed-in account can call that calls OpenRouter or embeds for that account takes `llm_limits.request_slot(account_id)` (or `turn_slot` for a chat turn) before it queues for a shared slot, so one account cannot take them all. Owner-only embedding admin routes are exempt. A new query embedding goes through `hybrid_search` or takes `llm_limits.account_embedding_slot(account_id)` itself.
 
 ---
 
