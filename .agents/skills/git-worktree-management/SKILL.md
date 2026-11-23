@@ -111,6 +111,7 @@ skills-sync wt new feat-auth-service
 # List active worktrees with upstream status
 skills-sync wt list
 
-# Sweep and clean merged or closed worktrees
+# Preview which merged worktrees of this checkout a sweep would clean (dry run;
+# `skills-sync daemon sweep` does the real sweep across registered repos)
 skills-sync wt sweep
 ```
